@@ -1,0 +1,8 @@
+SELECT Ivaventa.fecha, Ivaventa.tipo, Ivaventa.numero, Cliente.nombre,;
+  Cliente.cuit, Cliente.ef, Ivaventa.impnetgrab, Ivaventa.conograb,;
+  Ivaventa.operexen, Ivaventa.ivageneral, Ivaventa.ivanoins,;
+  Ivaventa.ret_ingbru, Ivaventa.ret_pcta, Ivaventa.imporfac;
+ FROM Ivaventa, Cliente, Abonados;
+ WHERE Cliente.cod_cli = Ivaventa.cod_cli;
+ HAVING Ivaventa.abonado = abonados.codigo;
+ ORDER BY Ivaventa.fecha

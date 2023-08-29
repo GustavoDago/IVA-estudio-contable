@@ -1,0 +1,1730 @@
+*       *********************************************************
+*       *                                                         
+*       * 25/02/1999           IVAVENTA.SPR              19:06:05 
+*       *                                                         
+*       *********************************************************
+*       *                                                         
+*       * Nombre del autor                                        
+*       *                                                         
+*       * Copyright (c) 1999 Nombre de la empresa                 
+*       * Dirección                                               
+*       * Ciudad,     C.P.                                        
+*       * País                                              
+*       *                                                         
+*       * Description:                                            
+*       * Este programa lo ha generado automáticamente GENSCRN.    
+*       *                                                         
+*       *********************************************************
+
+
+#REGION 0
+REGIONAL m.currarea, m.talkstat, m.compstat
+
+IF SET("TALK") = "ON"
+	SET TALK OFF
+	m.talkstat = "ON"
+ELSE
+	m.talkstat = "OFF"
+ENDIF
+m.compstat = SET("COMPATIBLE")
+SET COMPATIBLE FOXPLUS
+
+m.rborder = SET("READBORDER")
+SET READBORDER ON
+
+m.currarea = SELECT()
+
+
+*       *********************************************************
+*       *                                                         
+*       *  S8765110/Windows Bases de datos, índices, relaciones   
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("cliente")
+	SELECT cliente
+	SET ORDER TO TAG "cod_cli"
+ELSE
+	SELECT 0
+	USE (LOCFILE("cliente.dbf","DBF","Buscar  cliente?"));
+		AGAIN ALIAS cliente ;
+		ORDER TAG "cod_cli"
+ENDIF
+
+IF USED("ivaventa")
+	SELECT ivaventa
+	SET ORDER TO TAG "fecha"
+ELSE
+	SELECT 0
+	USE (LOCFILE("ivaventa.dbf","DBF","Buscar  ivaventa?"));
+		AGAIN ALIAS ivaventa ;
+		ORDER TAG "fecha"
+ENDIF
+
+SELECT ivaventa
+
+SET RELATION OFF INTO cliente
+SET RELATION TO ivaventa.cod_cli INTO cliente ADDITIVE
+
+SELECT ivaventa
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Definiciones de ventana             
+*       *                                                         
+*       *********************************************************
+*
+
+IF NOT WEXIST("ivaventas") ;
+	OR UPPER(WTITLE("IVAVENTAS")) == "IVAVENTAS.PJX" ;
+	OR UPPER(WTITLE("IVAVENTAS")) == "IVAVENTAS.SCX" ;
+	OR UPPER(WTITLE("IVAVENTAS")) == "IVAVENTAS.MNX" ;
+	OR UPPER(WTITLE("IVAVENTAS")) == "IVAVENTAS.PRG" ;
+	OR UPPER(WTITLE("IVAVENTAS")) == "IVAVENTAS.FRX" ;
+	OR UPPER(WTITLE("IVAVENTAS")) == "IVAVENTAS.QPR"
+	DEFINE WINDOW ivaventas ;
+		AT 0.000, 1.000 ;
+		SIZE 27.769,108.600 ;
+		TITLE "Iva Ventas" ;
+		FONT "MS Sans Serif", 8 ;
+		FLOAT ;
+		NOCLOSE ;
+		NOMINIMIZE ;
+		NONE ;
+		FILL FILE LOCFILE("VENTA.BMP","BMP|ICO|PCT|ICN", ;
+			"¿Dónde está venta?")
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *  IVAVENTA/Windows Código de configuración - SECCION 2   
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+select cliente
+COUNT FOR ABONADOS.CODIGO $ cliente.ABONADO TO A
+IF A = 0
+	WAIT WINDOW NOWAIT "NO EXISTE RELACION CON ALGUN CLIENTE"
+	RETURN
+ENDIF
+go top
+
+SELECT IVAventa
+set filter to ABONADOS.CODIGO $ IVAventa.ABONADO
+set skip to cliente
+go top
+
+CREATE CURSOR CONSULTA (FECHA D(8), TIPO N(2), sucursal N(2), NUMERO C(8), COD_CLI N(4), abonado C(1))
+SELECT CONSULTA
+INDEX ON STR(sucursal) + STR(tipo) + numero TO numero
+APPEND FROM ivaventa fields fecha, tipo, sucursal, numero, cod_cli, abonado for ABONADO = ABONADOS.CODIGO
+
+SELECT IVAVENTA
+set relation to STR(sucursal) + STR(tipo) + numero INTO consulta ADDITIVE
+go top
+scatter memvar
+select cliente
+scatter memvar
+
+select ivaventa
+SEN = .F.
+modi = .f.
+M.ANT_NOMB = " "
+M.ANT_NUM = "  "
+M.NUMREC = 0
+M.PRIMERO = 1
+M.ELEM = 10
+DECLARE MESES(12,1)
+MESES[1] = "ENERO"
+MESES[2] = "FEBRERO"
+MESES[3] = "MARZO"
+MESES[4] = "ABRIL"
+MESES[5] = "MAYO"
+MESES[6] = "JUNIO"
+MESES[7] = "JULIO"
+MESES[8] = "AGOSTO"
+MESES[9] = "SEPTIEMBRE"
+MESES[10] = "OCTUBRE"
+MESES[11] = "NOVIEMBRE"
+MESES[12] = "DICIEMBRE"
+
+DECLARE COMPROB(10,1)
+COMPROB[1] = "FC A"
+COMPROB[2] = "ND A"
+COMPROB[3] = "NC A"
+COMPROB[4] = "FC B"
+COMPROB[5] = "ND B"
+COMPROB[6] = "NC B"
+COMPROB[7] = "FC C"
+COMPROB[8] = "T   "
+COMPROB[9] = "L.P."
+COMPROB[10] = "C.R."
+
+IF ABONADOS.SUCURSALES = 1
+	DECLARE SUCU(1,1)
+	SUCU[1] = "0000"
+ELSE
+	DECLARE SUCU(ABONADOS.SUCURSALES + 1,1)
+	FOR N = 1 TO ABONADOS.SUCURSALES + 1
+		SUCU[N] = strtran(transform(N - 1 , "9999")," ","0")
+	NEXT
+endif
+m.pri_suc = 1
+m.num_suc = alen(sucu)
+
+#REGION 1
+DEFINE POPUP _s2t14xvpn ;
+	PROMPT FIELD Cliente.nombre + transform( Cliente.cod_cli, "  ") ;
+	SCROLL
+
+*       *********************************************************
+*       *                                                         
+*       *        IVAVENTA/Windows Distribución de pantalla        
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+IF WVISIBLE("ivaventas")
+	ACTIVATE WINDOW ivaventas SAME
+ELSE
+	ACTIVATE WINDOW ivaventas NOSHOW
+ENDIF
+@ 19.385,29.400 TO 23.154,108.600 ;
+	PATTERN 1 ;
+	PEN 1, 0 ;
+	COLOR RGB(,,,192,192,192)
+@ 0.000,0.000 TO 1.923,108.600 ;
+	PATTERN 1 ;
+	PEN 1, 0 ;
+	COLOR RGB(128,128,128,192,192,192)
+@ 22.923,57.400 TO 25.308,67.200 ;
+	PATTERN 1 ;
+	PEN 0, 8 ;
+	COLOR RGB(128,128,128,192,192,192)
+@ 11.308,31.200 SAY "Importe net grav 21%" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 12.385,72.000 SAY "Conc. no grav." ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 10.231,72.000 SAY "operac.exentas" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 14.077,72.000 SAY "Iva general" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 15.769,72.000 SAY "Iva no inscripto" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 15.923,31.200 SAY "ret. pago a cuenta" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 17.615,72.000 SAY " Importe " ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,128,0,128)
+@ 1.923,31.200 SAY "Fecha" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 1.923,72.000 SAY "Tipo" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 3.769,72.000 SAY "Numero" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 5.769,31.200 SAY "Nombre" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 7.462,31.200 SAY "Cuit" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 7.462,72.000 SAY "E.F." ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 3.769,31.200 SAY "Sucursal" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 11.308,72.000 SAY "ret. ingr. brutos" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 14.154,31.200 SAY "Importe net grav 10,5%" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 20.308,86.800 SAY (LOCFILE("sortdlg.bmp","BMP|ICO|PCT|ICN", "¿Dónde está sortdlg?" )) BITMAP ;
+	SIZE 1.154,3.200 ;
+	ISOMETRIC ;
+	STYLE "T"
+@ 10.231,31.200 SAY "Importe sin disc 21%" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 13.077,31.200 SAY "Importe sin disc 10,5%" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,0,0,128)
+@ 9.308,28.800 TO 9.846,108.600 ;
+	PATTERN 7 ;
+	PEN 1, 0 ;
+	STYLE "T" ;
+	COLOR RGB(128,128,128,0,255,255)
+@ 2.000,0.200 GET M.clie ;
+ 	PICTURE "@&N" ;
+	POPUP _s2t14xvpn ;
+	SIZE 17.308,29.000 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "" ;
+	WHEN _s2t14xvv4() ;
+	VALID _s2t14xvvi() ;
+	DISABLE
+@ 21.308,2.400 GET m.consumidor ;
+	PICTURE "@*C consumidor final" ;
+	SIZE 1.308,19.833 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2t14xvw2() ;
+	DISABLE
+@ 22.231,2.400 GET M.TICKET ;
+	PICTURE "@*C TICKET" ;
+	SIZE 1.308,11.833 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2t14xvx1() ;
+	DISABLE
+@ 23.154,2.400 GET m.tarje ;
+	PICTURE "@*C Tarjeta" ;
+	SIZE 1.308,11.167 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2t14xvy4() ;
+	DISABLE
+@ 24.077,2.400 GET m.retencion ;
+	PICTURE "@*C Comp. retenc." ;
+	SIZE 1.308,17.667 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2t14xvzk() ;
+	DISABLE
+@ 25.000,2.400 GET M.ANUL ;
+	PICTURE "@*C ANULADO" ;
+	SIZE 1.308,14.333 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2t14xw0z() ;
+	DISABLE
+@ 1.923,43.600 GET M.FECHA ;
+	SIZE 1.000,13.600 ;
+	DEFAULT {  /  /  } ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "@E" ;
+	DISABLE
+@ 1.846,81.600 GET M.TIPO ;
+	PICTURE "@^" ;
+	FROM COMPROB ;
+	SIZE 1.538,14.167 ;
+	RANGE M.PRIMERO, M.ELEM ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	WHEN _s2t14xw2k() ;
+	VALID _s2t14xw30() ;
+	DISABLE
+@ 3.692,43.200 GET M.SUCURSAL ;
+	PICTURE "@^" ;
+	FROM SUCU ;
+	SIZE 1.538,12.167 ;
+	RANGE m.pri_suc, m.num_suc ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	WHEN _s2t14xw3s() ;
+	VALID _s2t14xw48() ;
+	DISABLE
+@ 3.769,82.000 GET M.NUMERO ;
+	SIZE 1.000,16.200 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "@K 99999999" ;
+	DISABLE
+@ 10.231,58.000 GET m.siniva21 ;
+	SIZE 1.000,11.200 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "@K 999999.99" ;
+	VALID _s2t14xw5j() ;
+	DISABLE
+@ 11.385,58.000 GET m.impnetgrab ;
+	SIZE 1.000,11.200 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "999999.99" ;
+	WHEN _s2t14xw66() ;
+	VALID _s2t14xw6j() ;
+	DISABLE
+@ 13.000,58.000 GET siniva105 ;
+	SIZE 1.000,11.200 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "@K 999999.99" ;
+	VALID _s2t14xw7e() ;
+	DISABLE
+@ 14.154,58.000 GET m.impnet105 ;
+	SIZE 1.000,11.200 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "999999.99" ;
+	WHEN _s2t14xw84() ;
+	VALID _s2t14xw8g() ;
+	DISABLE
+@ 15.923,58.000 GET m.ret_pcta ;
+	SIZE 1.000,11.200 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "99999.99" ;
+	VALID _s2t14xw9d() ;
+	DISABLE
+@ 10.000,94.000 GET m.operexen ;
+	SIZE 1.000,11.200 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "99999.99" ;
+	VALID _s2t14xw9x() ;
+	DISABLE
+@ 11.154,94.000 GET m.ret_ingbru ;
+	SIZE 1.000,11.200 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "99999.99" ;
+	VALID _s2t14xwah() ;
+	DISABLE
+@ 12.308,94.000 GET m.conograb ;
+	SIZE 1.000,11.200 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "99999.99" ;
+	VALID _s2t14xwb1() ;
+	DISABLE
+@ 13.923,94.000 SAY m.ivageneral ;
+	SIZE 1.000,11.167 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	PICTURE "999999.99" ;
+	COLOR RGB(0,0,0,,,,)
+@ 15.769,94.000 SAY m.ivanoins ;
+	SIZE 1.000,11.167 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	PICTURE "999999.99" ;
+	COLOR RGB(0,0,0,,,,)
+@ 19.462,31.200 GET M.MOSTRAR ;
+	PICTURE "@*RVN PANTALLA;IMPRESORA" ;
+	SIZE 1.308,16.667,0.308 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT"
+@ 19.385,53.400 GET M.MES ;
+	PICTURE "@^" ;
+	FROM MESES ;
+	SIZE 1.538,14.000 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B"
+@ 21.231,53.200 GET M.ANIO ;
+	PICTURE "@^ 1995;1996;1997;1998;1999;2000;2001;2002;2003;2004;2005" ;
+	SIZE 1.538,14.167 ;
+	DEFAULT "1998" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B"
+@ 19.462,91.600 GET M.ORDEN ;
+	PICTURE "@*RVN FECHA;NUMERO" ;
+	SIZE 1.308,13.500,0.308 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2t14xwch()
+@ 25.769,29.000 GET m.movimiento ;
+	PICTURE "@*BHN " + ;
+		(LOCFILE("..\wizards\wizbmps\wztop.bmp","BMP|ICO|PCT|ICN","¿Dónde está wztop?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzback.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzback?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzlocate.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzlocate?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wznext.bmp","BMP|ICO|PCT|ICN","¿Dónde está wznext?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzend.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzend?")) ;
+	SIZE 2.000,8.800,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	VALID _s2t14xwdh()
+@ 23.077,29.000 GET m.ACCION ;
+	PICTURE "@*BHN " + ;
+		(LOCFILE("..\wizards\wizbmps\wznew.bmp","BMP|ICO|PCT|ICN","¿Dónde está wznew?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzdelete.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzdelete?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzedit.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzedit?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzprint.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzprint?")) + ";" + ;
+		(LOCFILE("locate.bmp","BMP|ICO|PCT|ICN","¿Dónde está locate?")) ;
+	SIZE 2.077,8.800,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	VALID _s2t14xwf8()
+@ 23.154,79.200 GET m.ACEPTAR ;
+	PICTURE "@*VN ACEPTAR;CANCELAR" ;
+	SIZE 2.000,12.167,0.615 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s2t14xwio() ;
+	DISABLE
+@ 23.154,96.400 GET m.salir ;
+	PICTURE "@*BHT " + ;
+		(LOCFILE("..\wizards\wizbmps\wzclose.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzclose?")) ;
+	SIZE 4.615,12.200,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8
+@ 0.077,67.600 SAY Abonados.ef ;
+	SIZE 1.000,4.625 ;
+	FONT "MS Sans Serif", 10 ;
+	STYLE "B" ;
+	COLOR RGB(0,0,0,192,192,192)
+@ 17.615,91.800 GET m.imporfac ;
+	SIZE 1.000,13.000 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	PICTURE "9999999.99" ;
+	DISABLE ;
+	COLOR ,RGB(255,255,255,0,0,0)
+@ 5.615,43.600 SAY M.nombre ;
+	SIZE 1.000,41.333 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	COLOR RGB(,,,192,192,192)
+@ 7.462,43.600 SAY M.cuit ;
+	SIZE 1.000,19.333 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	COLOR RGB(,,,192,192,192)
+@ 7.462,79.800 SAY M.ef ;
+	SIZE 1.000,11.167 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	COLOR RGB(,,,192,192,192)
+@ 0.077,2.800 SAY Abonados.nombre ;
+	SIZE 1.000,37.000 ;
+	FONT "MS Sans Serif", 10 ;
+	STYLE "B" ;
+	COLOR RGB(0,0,0,192,192,192)
+@ 22.923,29.400 TO 22.923,77.000 ;
+	PEN 1, 8 ;
+	STYLE "1" ;
+	COLOR RGB(128,128,128,128,128,128)
+@ 19.462,76.800 TO 22.924,76.800 ;
+	PEN 1, 8 ;
+	COLOR RGB(128,128,128,128,128,128)
+
+IF NOT WVISIBLE("ivaventas")
+	ACTIVATE WINDOW ivaventas
+ENDIF
+
+READ CYCLE MODAL ;
+	SHOW _s2t14xwph()
+
+RELEASE WINDOW ivaventas
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Cerrando bases de datos             
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("cliente")
+	SELECT cliente
+	USE
+ENDIF
+
+IF USED("ivaventa")
+	SELECT ivaventa
+	USE
+ENDIF
+
+SELECT (m.currarea)
+
+RELEASE POPUPS _s2t14xvpn
+
+#REGION 0
+
+SET READBORDER &rborder
+
+IF m.talkstat = "ON"
+	SET TALK ON
+ENDIF
+IF m.compstat = "ON"
+	SET COMPATIBLE ON
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *           IVAVENTA/Windows Código de limpieza           
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+select consulta
+use
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XVV4           M.clie WHEN                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   28  
+*       * Variable:            M.clie                             
+*       * Called By:           WHEN Clause                        
+*       * Object Type:         List                               
+*       * Snippet Number:      1                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xvv4     &&  M.clie WHEN
+#REGION 1
+DO VENWHEN.PRG
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XVVI           M.clie VALID                       
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   28  
+*       * Variable:            M.clie                             
+*       * Called By:           VALID Clause                       
+*       * Object Type:         List                               
+*       * Snippet Number:      2                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xvvi     &&  M.clie VALID
+#REGION 1
+_curobj = 2
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XVW2           m.consumidor VALID                 
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   29  
+*       * Variable:            m.consumidor                       
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      3                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xvw2     &&  m.consumidor VALID
+#REGION 1
+IF M.CONSUMIDOR = .T.
+	M.COD_CLI = 64
+	M.NOMBRE = "Consumidor final"
+	M.CUIT = "-------"
+	M.EF = "C.F."
+	if abonados.ef = "R.I."
+		M.PRIMERO = 4
+		M.ELEM = 1
+	ELSE
+		M.PRIMERO = 7
+		M.ELEM = 1
+	ENDIF
+	SHOW GET M.CLIE DISABLE
+	show get m.siniva21 enable
+	show get m.siniva105 enable
+	show get m.impnetgrab disable
+	show get m.impnet105 disable
+ELSE
+	SHOW GET M.CLIE ENABLE
+	_CUROBJ = OBJNUM(M.CLIE)
+ENDIF
+SHOW GETS
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XVX1           M.TICKET VALID                     
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   30  
+*       * Variable:            M.TICKET                           
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      4                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xvx1     &&  M.TICKET VALID
+#REGION 1
+IF M.TICKET = .T.
+	M.PRIMERO = 8
+	M.ELEM = 1
+	M.TIPO = 1
+	M.consumidor = .T.
+	M.NOMBRE = "Consumidor final"
+	M.CUIT = "-------"
+	M.EF = "C.F."
+	m.tarje = .f.
+	show get m.tarje disable
+	show get m.retencion disable
+	SHOW GET M.consumidor disable
+	SHOW GET M.CLIE DISABLE
+	show get m.siniva21 enable
+	show get m.siniva105 enable
+	show get m.impnetgrab disable
+	show get m.impnet105 disable
+ELSE
+	M.consumidor = .f.
+	SHOW GET M.CLIE ENABLE
+	show get m.consumidor enable
+	show get m.tarje enable
+	show get m.retencion enable
+	_curobj = OBJNUM (M.CLIE)
+ENDIF
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XVY4           m.tarje VALID                      
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   31  
+*       * Variable:            m.tarje                            
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      5                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xvy4     &&  m.tarje VALID
+#REGION 1
+if m.tarje = .t.
+	M.PRIMERO = 9
+	M.ELEM = 1
+	m.pri_suc = 1
+	m.num_suc = 1
+	m.sucursal = sucu[1]
+	m.ticket = .f.
+	m.consumidor = .f.
+	show get m.conograb disable
+	show get m.operexen disable
+	show get m.consumidor disable
+	show get m.ticket disable
+	show get m.sucursal disable
+	show get m.numero enable
+	show get m.retencion disable
+	show get m.siniva21 enable
+	show get m.siniva105 enable
+	show get m.impnetgrab disable
+	show get m.impnet105 disable
+else
+	if alen(sucu) = 1
+		m.pri_suc = 1
+		m.num_suc = 1
+		m.sucursal = sucu[1]
+	else
+		m.pri_suc = 2
+		m.num_suc = abonados.sucursales
+		m.sucursal = sucu[2]
+	endif
+	show get m.consumidor enable
+	show get m.ticket enable
+	show get m.sucursal enable
+	show get m.numero disable
+	show get m.retencion enable
+	show get m.conograb enable
+	show get m.operexen enable
+	_curobj = OBJNUM (M.CLIE)
+endif	
+m.numero = "   "
+show gets
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XVZK           m.retencion VALID                  
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   32  
+*       * Variable:            m.retencion                        
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      6                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xvzk     &&  m.retencion VALID
+#REGION 1
+if m.retencion = .t.
+	M.PRIMERO = 10
+	M.ELEM = 1
+	m.pri_suc = 1
+	m.num_suc = alen(sucu)
+	m.sucursal = sucu[1]
+	m.ticket = .f.
+	m.consumidor = .f.
+	show get m.consumidor disable
+	show get m.ticket disable
+	show get m.numero enable
+	show get m.tarje disable
+	show get m.conograb disable
+	show get m.operexen disable
+	show get m.siniva21 enable
+	show get m.siniva105 enable
+	show get m.impnetgrab disable
+	show get m.impnet105 disable
+else
+	if alen(sucu) = 1
+		m.pri_suc = 1
+		m.num_suc = 1
+		m.sucursal = sucu[1]
+	else
+		m.pri_suc = 2
+		m.num_suc = abonados.sucursales
+		m.sucursal = sucu[2]
+	endif
+	show get m.consumidor enable
+	show get m.ticket enable
+	show get m.tarje enable
+	show get m.conograb enable
+	show get m.operexen enable
+	_curobj = OBJNUM (M.CLIE)
+endif	
+m.numero = "   "
+show gets
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XW0Z           M.ANUL VALID                       
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   33  
+*       * Variable:            M.ANUL                             
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      7                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xw0z     &&  M.ANUL VALID
+#REGION 1
+IF M.ANUL = .T.
+	M.COD_CLI = 0
+	M.NOMBRE = "ANULADO"
+	m.cuit = "----"
+	m.ef = "  "
+	m.tipo = 1
+	m.primero = 1
+	m.elem = 10
+	SHOW GETS DISABLE
+	SHOW GET M.ANUL ENABLE
+	SHOW GET M.FECHA ENABLE
+	SHOW GET M.sucursal enable
+	SHOW GET M.ACEPTAR ENABLE
+	show get m.tipo enable
+	_curobj = OBJNUM (M.CLIE)
+ELSE
+	_CUROBJ = 16
+	SHOW GETS ENABLE
+	SHOW GET M.ACCION DISABLE
+	SHOW GET M.MOVIMIENTO DISABLE
+	SHOW GET M.SALIR DISABLE
+	SHOW GET M.ORDEN DISABLE
+	SHOW GET M.INFORME DISABLE
+	SHOW GET M.MES DISABLE
+	SHOW GET M.ANIO DISABLE
+	SHOW GET M.MOSTRAR DISABLE
+ENDIF
+M.CONSUMIDOR = .F.
+m.ivageneral = 0
+m.impnetgrab = 0
+m.ivanoins = 0
+m.imporfac = 0
+m.conograb = 0
+m.operexen = 0
+m.ret_ingbru = 0
+m.ret_pcta = 0
+m.sucursal  = "    "
+SHOW GETS
+	
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XW2K           M.TIPO WHEN                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   35  
+*       * Variable:            M.TIPO                             
+*       * Called By:           WHEN Clause                        
+*       * Object Type:         Popup                              
+*       * Snippet Number:      8                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xw2k     &&  M.TIPO WHEN
+#REGION 1
+if m.nombre <> "             "
+	return  .t.
+else
+	return .f.
+endif
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XW30           M.TIPO VALID                       
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   35  
+*       * Variable:            M.TIPO                             
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Popup                              
+*       * Snippet Number:      9                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xw30     &&  M.TIPO VALID
+#REGION 1
+if m.tarje = .t. .or. alen(sucu) = 1
+	m.pri_suc = 1
+	m.num_suc = 1
+	m.sucursal = sucu[1]
+else
+	m.pri_suc = 2
+	m.num_suc = alen(sucu)
+	m.sucursal = sucu[2]
+endif
+if m.retencion = .t.
+	m.pri_suc = 1
+endif
+show get m.sucursal
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XW3S           M.SUCURSAL WHEN                    
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   36  
+*       * Variable:            M.SUCURSAL                         
+*       * Called By:           WHEN Clause                        
+*       * Object Type:         Popup                              
+*       * Snippet Number:      10                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xw3s     &&  M.SUCURSAL WHEN
+#REGION 1
+if m.nombre <> "             "
+	return  .t.
+else
+	return .f.
+endif
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XW48           M.SUCURSAL VALID                   
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   36  
+*       * Variable:            M.SUCURSAL                         
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Popup                              
+*       * Snippet Number:      11                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xw48     &&  M.SUCURSAL VALID
+#REGION 1
+if m.modi = .t.
+	return
+endif
+select ivaventa
+SET ORDER TO 2
+set near off
+GO TOP
+seek str(ascan(sucu,m.sucursal)) + str(m.tipo + M.PRIMERO -1 )
+if .not. found()
+	m.numero = "00000001"
+	show get m.numero enable
+else
+	M.VALOR = m.tipo + M.PRIMERO - 1
+	m.suc = val(m.sucursal) + 1
+	m.eof = 0
+	do while tipo = m.valor .and. m.suc = sucursal
+		if .not. eof()
+			skip
+		else
+			exit
+			m.eof = 1
+		endif
+	enddo
+	if m.eof = 0
+		skip - 1
+	endif
+	m.numero = strtran(transform(val(numero) + 1, "99999999")," ","0")
+	show get m.numero enable
+ENDIF
+show gets
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XW5J           m.siniva21 VALID                   
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   38  
+*       * Variable:            m.siniva21                         
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Field                              
+*       * Snippet Number:      12                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xw5j     &&  m.siniva21 VALID
+#REGION 1
+m.impnetgrab = m.siniva21 /1.21
+m.ivageneral = m.impnetgrab * 0.21 + m.impnet105 * 0.105
+m.ivanoins = 0
+m.imporfac = m.siniva21 + m.siniva105 + m.conograb + m.operexen + m.ret_ingbru + m.ret_pcta
+show gets
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XW66           m.impnetgrab WHEN                  
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   39  
+*       * Variable:            m.impnetgrab                       
+*       * Called By:           WHEN Clause                        
+*       * Object Type:         Field                              
+*       * Snippet Number:      13                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xw66     &&  m.impnetgrab WHEN
+#REGION 1
+return IIF(m.tipo = 0,  .f.,  .t.)
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XW6J           m.impnetgrab VALID                 
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   39  
+*       * Variable:            m.impnetgrab                       
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Field                              
+*       * Snippet Number:      14                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xw6j     &&  m.impnetgrab VALID
+#REGION 1
+do case
+case cliente.ef = "R.I" .and. abonados.ef = "R.I."
+	m.ivageneral = m.impnetgrab * 0.21 + m.impnet105 * 0.105
+	m.ivanoins = 0
+case cliente.ef <> "R.I." .and. abonados.ef = "R.I."	
+	m.ivageneral = m.impnetgrab * 0.21 + m.impnet105 * 0.105
+	m.ivanoins = m.ivageneral / 2
+case abonados.ef <> "R.I."
+	m.ivageneral = 0
+	m.ivanoins = 0
+endcase
+
+m.imporfac = m.impnetgrab + m.impnet105 + m.ivageneral + m.ivanoins + m.ret_pcta + m.operexen ;
+	 + m.ret_ingbru + m.conograb
+
+show gets
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XW7E           siniva105 VALID                    
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   40  
+*       * Variable:            siniva105                          
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Field                              
+*       * Snippet Number:      15                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xw7e     &&  siniva105 VALID
+#REGION 1
+m.impnet105 = m.siniva105 /1.105
+m.ivageneral = m.impnet105 * 0.105 + m.impnetgrab * 0.21
+m.ivanoins = 0
+m.imporfac = m.siniva21 + m.siniva105 + m.conograb + m.operexen + m.ret_ingbru + m.ret_pcta
+show gets
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XW84           m.impnet105 WHEN                   
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   41  
+*       * Variable:            m.impnet105                        
+*       * Called By:           WHEN Clause                        
+*       * Object Type:         Field                              
+*       * Snippet Number:      16                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xw84     &&  m.impnet105 WHEN
+#REGION 1
+return IIF(m.tipo = 0,  .f.,  .t.)
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XW8G           m.impnet105 VALID                  
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   41  
+*       * Variable:            m.impnet105                        
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Field                              
+*       * Snippet Number:      17                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xw8g     &&  m.impnet105 VALID
+#REGION 1
+do case
+case cliente.ef = "R.I" .and. abonados.ef = "R.I."
+	m.ivageneral = m.impnetgrab * 0.21 + m.impnet105 * 0.105
+	m.ivanoins = 0
+case cliente.ef <> "R.I." .and. abonados.ef = "R.I."	
+	m.ivageneral = m.impnetgrab * 0.21 + m.impnet105 * 0.105
+	m.ivanoins = m.ivageneral / 2
+case abonados.ef <> "R.I."
+	m.ivageneral = 0
+	m.ivanoins = 0
+endcase
+
+m.imporfac = m.impnetgrab + m.impnet105 + m.ivageneral + m.ivanoins + m.ret_pcta + ;
+	m.operexen + m.ret_ingbru + m.conograb
+
+show gets
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XW9D           m.ret_pcta VALID                   
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   42  
+*       * Variable:            m.ret_pcta                         
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Field                              
+*       * Snippet Number:      18                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xw9d     &&  m.ret_pcta VALID
+#REGION 1
+m.imporfac = m.impnetgrab + m.impnet105 + m.ivageneral + m.ivanoins + ;
+	m.ret_pcta + m.operexen + m.ret_ingbru + m.conograb
+show gets
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XW9X           m.operexen VALID                   
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   43  
+*       * Variable:            m.operexen                         
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Field                              
+*       * Snippet Number:      19                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xw9x     &&  m.operexen VALID
+#REGION 1
+m.imporfac = m.impnetgrab + m.impnet105 + m.ivageneral + m.ivanoins + ;
+	m.ret_pcta + m.operexen + m.ret_ingbru + m.conograb
+show gets
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XWAH           m.ret_ingbru VALID                 
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   44  
+*       * Variable:            m.ret_ingbru                       
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Field                              
+*       * Snippet Number:      20                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xwah     &&  m.ret_ingbru VALID
+#REGION 1
+m.imporfac = m.impnetgrab + m.impnet105 + m.ivageneral + m.ivanoins + ;
+	m.ret_pcta + m.operexen + m.ret_ingbru + m.conograb
+show gets
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XWB1           m.conograb VALID                   
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   45  
+*       * Variable:            m.conograb                         
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Field                              
+*       * Snippet Number:      21                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xwb1     &&  m.conograb VALID
+#REGION 1
+m.imporfac = m.impnetgrab + m.impnet105 + m.ivageneral + m.ivanoins + ;
+	m.ret_pcta + m.operexen + m.ret_ingbru + m.conograb
+show gets
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XWCH           M.ORDEN VALID                      
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   51  
+*       * Variable:            M.ORDEN                            
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Radio Button                       
+*       * Snippet Number:      22                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xwch     &&  M.ORDEN VALID
+#REGION 1
+SET ORDER TO ORDEN
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XWDH           m.movimiento VALID                 
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   52  
+*       * Variable:            m.movimiento                       
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      23                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xwdh     &&  m.movimiento VALID
+#REGION 1
+SELECT IVAVENTA
+DO P_MUEVE.PRG
+m.clie = Cliente.nombre + transform( Cliente.cod_cli, "  ")
+IF M.COD_CLI = 0
+	M.ANUL = .T.
+ELSE
+	M.ANUL = .F.
+ENDIF
+
+IF tipo = 8
+	m.ticket = .t.
+	m.consumidor = .t.
+else
+	m.ticket = .f.
+	m.consumidor = .f.
+endif
+if tipo = 9
+	m.tarje = .t.
+else
+	m.tarje = .f.
+endif
+IF M.COD_CLI = 64
+	m.consumidor = .t.
+else
+	m.consumidor = .f.
+endif
+if tipo = 10
+	m.retencion = .t.
+else
+	m.retencion = .f.
+endif
+
+M.NOMBRE = cliente.nombre
+M.CUIT = cliente.cuit
+M.EF = cliente.ef
+SHOW GETS
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XWF8           m.ACCION VALID                     
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   53  
+*       * Variable:            m.ACCION                           
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      24                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xwf8     &&  m.ACCION VALID
+#REGION 1
+select ivaventa
+DO CASE
+CASE M.ACCION = 1
+	m.ticket = .f.
+	m.consumidor = .f.
+	m.anul = .f.
+	m.tarje = .f.
+	m.retencion = .f.
+	SCATTER MEMVAR BLANK
+	IF alen(SUCU) = 1
+		M.PRI_suc = 1
+		m.num_suc = 1
+		m.sucursal = sucu[1]
+	ELSE
+		m.pri_suc = 2
+		m.num_suc = ABONADOS.SUCURSALES
+		m.sucursal = sucu[2]
+	ENDIF
+	SET ORDER TO 1 IN CLIENTE
+	M.clie = Cliente.nombre + transform( Cliente.cod_cli, "  ")
+	SHOW GETS ENABLE
+	show get m.imporfac disable
+	SHOW GET M.MES DISABLE
+	SHOW GET M.ANIO DISABLE
+	SHOW GET M.MOSTRAR DISABLE
+	SHOW GET M.ACCION DISABLE
+	SHOW GET M.MOVIMIENTO DISABLE
+	SHOW GET M.SALIR DISABLE
+	SHOW GET M.ORDEN DISABLE
+	_CUROBJ = 1
+CASE M.ACCION = 2
+	DO BORRAVEN.SPR
+CASE M.ACCION = 3
+	SHOW GETS ENABLE
+	SHOW GET M.MES DISABLE
+	SHOW GET M.ANIO DISABLE
+	SHOW GET M.MOSTRAR DISABLE
+	SHOW GET M.ACCION DISABLE
+	SHOW GET M.MOVIMIENTO DISABLE
+	show get m.imporfac disable
+	SHOW GET M.SALIR DISABLE
+	SHOW GET M.ORDEN DISABLE
+	SCATTER MEMVAR
+	m.sucursal = strtran(transform(sucursal -1, "9999")," ","0")
+	IF sucursal = 1
+		M.PRI_suc = 1
+		m.num_suc = 1
+	ELSE
+		m.pri_suc = 2
+		m.num_suc = ABONADOS.SUCURSALES
+	ENDIF
+
+	IF M.TIPO = 3 .OR. M.TIPO = 6
+		m.ivageneral = m.ivageneral * (-1)
+		m.impnetgrab = M.impnetgrab * (-1)
+		m.ivanoins = m.ivanoins * (-1)
+		m.imporfac = m.imporfac * (-1)
+		m.conograb = m.conograb * (-1)
+		m.operexen = m.operexen * (-1)
+		m.ret_ingbru = m.ret_ingbru * (-1)
+		m.ret_pcta = m.ret_pcta * (-1)
+		m.impnet105 = m.impnet105 * (-1)
+	ENDIF
+	
+	_CUROBJ = 1
+	M.NUMREC = RECNO("ivaventa")
+	M.ANT_NUM = M.NUMERO
+	M.ANT_NOMB = M.NOMBRE
+	modi = .t.
+	SET ORDER TO 1 IN CLIENTE
+	M.clie = Cliente.nombre + transform( Cliente.cod_cli, "  ")
+	
+	do case
+	case m.tipo < 4
+		m.primero = 1
+		m.elem = 3
+	case m.tipo < 7
+		m.primero = 4
+		m.elem =3
+	otherwise
+		m.primero = m.tipo
+		m.elem = 1
+	endcase
+	IF M.TIPO > 3 .AND. M.TIPO <> 7
+		M.SINIVA21 = M.impnetgrab * 1.21
+		m.siniva105 = m.impnet105 * 1.105
+	ENDIF
+	
+	m.tipo = m.tipo - m.primero + 1
+	
+	IF NOMBRE = "ANULADO"
+		SHOW GETS DISABLE
+		SHOW GET M.ACEPTAR ENABLE
+		SHOW GET M.FECHA ENABLE
+		SHOW GET M.sucursal enable
+		SHOW GET M.CONSUMIDOR ENABLE
+		SHOW GET M.ANUL ENABLE
+		show get m.tipo enable
+	ENDIF
+	DO VENWHEN.PRG
+CASE M.ACCION = 4
+		set skip to cliente
+		SET ORDER TO 1
+		IF M.MOSTRAR = 1
+			REPORT FORM IVAVENTA NOCONSOLE FOR IVAVENTA.ABONADO = ABONADOS.CODIGO .AND. MONTH(FECHA) = M.MES .AND. YEAR(FECHA) = VAL(M.ANIO) PREVIEW
+		ELSE
+			REPORT FORM IVAVENTA NOCONSOLE FOR IVAVENTA.ABONADO = ABONADOS.CODIGO .AND. MONTH(FECHA) = M.MES .AND. YEAR(FECHA) = VAL(M.ANIO) TO PRINTER PROMPT
+		ENDIF
+ 		set skip to
+CASE M.ACCION = 5
+	do busqueda.spr	
+ENDCASE
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XWIO           m.ACEPTAR VALID                    
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA,     Record Number:   54  
+*       * Variable:            m.ACEPTAR                          
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      25                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xwio     &&  m.ACEPTAR VALID
+#REGION 1
+IF M.ACEPTAR = 1
+	DO CASE
+	CASE M.ACCION = 1
+		IF M.FECHA < CTOD("01/01/80")
+			WAIT WINDOW NOWAIT "ESCRIBA LA FECHA"
+			RETURN
+		ENDIF
+		IF M.NUMERO <> "       "
+			set order to 2	
+			SEEK M.SUCURSAL + STR(M.TIPO + M.PRIMERO - 1) + M.NUMERO
+			IF FOUND()
+				WAIT WINDOW "ERROR. NUMERO DUPLICADO."
+				RETURN
+			ENDIF
+		ELSE
+			WAIT WINDOW NOWAIT "ESCRIBA EL NUMERO"
+			RETURN
+		ENDIF
+		IF M.SUCURSAL = "    "
+			WAIT WINDOW NOWAIT "ESCRIBA LA SUCURSAL"
+			RETURN
+		ENDIF
+		if m.imporfac <= 0 .and. m.anul = .f. .and. m.tarje = .f. .and. m.retencion = .f.
+			wait window nowait "ESCRIBA EL IMPORTE TOTAL"
+			RETURN
+		ENDIF
+		if m.impnetgrab < 0
+			wait window nowait "EL IMPORTE NETO GRAVADO CON EL 21 % NO PUEDE SER NEGATIVO"
+			RETURN
+		ENDIF
+		if empty(m.nombre)
+			WAIT WINDOW NOWAIT "SELECCIONE EL CLIENTE"
+			RETURN
+		ENDIF
+		IF M.IMPORFAC >= 1000 .AND. M.consumidor = .t. .and. m.ticket = .f.
+			WAIT WINDOW NOWAIT "DEBE COLOCAR EL NOMBRE DEL CONSUMIDOR"
+			RETURN
+		ENDIF
+
+		m.sucursal = ASCAN(SUCU,m.sucursal)
+		m.abonado = abonados.codigo
+		m.TIPO = m.tipo - 1 + M.PRIMERO
+		IF M.TIPO = 3 .OR. M.TIPO = 6
+			m.ivageneral = m.ivageneral * (-1)
+			m.impnetgrab = M.impnetgrab * (-1)
+			m.ivanoins = m.ivanoins * (-1)
+			m.imporfac = m.imporfac * (-1)
+			m.conograb = m.conograb * (-1)
+			m.operexen = m.operexen * (-1)
+			m.ret_ingbru = m.ret_ingbru * (-1)
+			m.ret_pcta = m.ret_pcta * (-1)
+		ENDIF
+		if m.consumidor = .t.
+			m.cod_cli = 64
+		endif
+		if m.anul = .t.
+			m.cod_cli = 0
+		endif
+		INSERT INTO ivaventa FROM MEMVAR
+		INSERT INTO consulta FROM MEMVAR
+		m.pri_suc = 1
+		m.num_suc = alen(sucu)			
+		M.consumidor = .f.
+		m.anul = .f.
+		M.TICKET = .F.
+		m.tarje = .f.
+		m.retencion = .f.
+
+	CASE M.ACCION = 3
+		IF M.FECHA < CTOD("01/01/80")
+			WAIT WINDOW NOWAIT "ESCRIBA LA FECHA"
+			RETURN
+		ENDIF
+		IF M.NUMERO <> "    "
+			set order to 2	
+			SEEK M.SUCURSAL + STR(M.TIPO + M.PRIMERO -1 ) + M.NUMERO
+			IF FOUND()
+				IF RECNO() <> M.NUMREC
+					WAIT WINDOW "ERROR. NUMERO DUPLICADO."
+					RETURN
+				ENDIF
+			ENDIF
+		ELSE
+			WAIT WINDOW NOWAIT "ESCRIBA EL NUMERO"
+			RETURN
+		ENDIF
+		IF M.SUCURSAL = "    "
+			WAIT WINDOW NOWAIT "ESCRIBA LA SUCURSAL"
+			RETURN
+		ENDIF
+		if m.impnetgrab < 0
+			wait window nowait "EL IMPORTE NETO GRAVADO CON EL 21 % NO PUEDE SER NEGATIVO"
+			RETURN
+		ENDIF
+
+		if .not. m.imporfac >= 0 .and. m.anul = .f. .and. m.tarje = .f. .and. m.retencion = .f.
+				wait window nowait "ESCRIBA EL IMPORTE TOTAL"
+				RETURN
+			ENDIF
+		if M.CUIT = "   "
+			WAIT WINDOW NOWAIT "SELECCIONE EL CLIENTE"
+			RETURN
+		ENDIF
+		IF M.IMPORFAC >= 1000 .AND. M.Consumidor = .t. .and. m.ticket = .f.
+			WAIT WINDOW NOWAIT "DEBE COLOCAR EL NOMBRE DEL CONSUMIDOR"
+			RETURN
+		ENDIF
+
+		m.TIPO = m.tipo -1 + M.PRIMERO
+		select ivaventa
+		GO M.NUMREC
+		IF M.TIPO = 3 .OR. M.TIPO = 6
+			m.ivageneral = m.ivageneral * (-1)
+			m.impnetgrab = M.impnetgrab * (-1)
+			m.impnet105 = m.impnet105 * (-1)
+			m.ivanoins = m.ivanoins * (-1)
+			m.imporfac = m.imporfac * (-1)
+			m.conograb = m.conograb * (-1)
+			m.operexen = m.operexen * (-1)
+			m.ret_ingbru = m.ret_ingbru * (-1)
+			m.ret_pcta = m.ret_pcta * (-1)
+		ENDIF
+		if m.consumidor = .t.
+			m.cod_cli = 64
+		endif
+		if m.anul = .t.
+			m.cod_cli = 0
+		endif
+		m.sucursal = ASCAN(SUCU,m.sucursal)
+		m.abonado = abonados.codigo
+		select consulta
+		GATHER MEMVAR
+		select IVAVENTA
+		GATHER MEMVAR
+		M.consumidor = .f.
+		m.anul = .f.
+		m.modi = .f.
+		M.TICKET = .F.
+		m.tarje = .f.
+		m.retencion = .f.
+		m.pri_suc = 1
+		m.num_suc = alen(sucu)
+
+ENDCASE
+ENDIF
+
+M.PRIMERO = 1
+M.ELEM = 10
+m.siniva21 = 0
+m.siniva105 = 0
+
+SHOW GETS DISABLE
+SHOW GET M.ACCION ENABLE
+SHOW GET M.MOVIMIENTO ENABLE
+SHOW GET M.ACEPTAR DISABLE
+SHOW GET M.ORDEN ENABLE
+SHOW GET M.SALIR ENABLE
+show get m.mostrar enable
+show get m.mes enable
+show get m.anio enable
+SET ORDER TO 3 IN CLIENTE
+GO TOP IN CLIENTE
+SELECT ivaventa
+SET RELATION TO COD_cli INTO cliente
+set order to ORDEN
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XWPH           Nivel de lectura SHOW              
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVAVENTA                           
+*       * Called By:           READ Statement                     
+*       * Snippet Number:      26                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xwph     && Read Level Show
+PRIVATE currwind
+STORE WOUTPUT() TO currwind
+*
+* Código SHOW de la pantalla: IVAVENTA
+*
+#REGION 1
+IF SYS(2016) = "IVAVENTAS" OR SYS(2016) = "*"
+	ACTIVATE WINDOW ivaventas SAME
+	@ 13.923,94.000 SAY m.ivageneral ;
+		SIZE 1.000,11.167, 0.000 ;
+		FONT "MS Sans Serif", 8 ;
+		STYLE "B" ;
+		PICTURE "999999.99" ;
+		COLOR RGB(0,0,0,,,,)
+	@ 15.769,94.000 SAY m.ivanoins ;
+		SIZE 1.000,11.167, 0.000 ;
+		FONT "MS Sans Serif", 8 ;
+		STYLE "B" ;
+		PICTURE "999999.99" ;
+		COLOR RGB(0,0,0,,,,)
+	@ 0.077,67.600 SAY Abonados.ef ;
+		SIZE 1.000,4.625, 0.000 ;
+		FONT "MS Sans Serif", 10 ;
+		STYLE "B" ;
+		COLOR RGB(0,0,0,192,192,192)
+	@ 5.615,43.600 CLEAR TO 6.615,84.933
+	@ 5.615,43.600 SAY M.nombre ;
+		SIZE 1.000,41.333, 0.000 ;
+		FONT "MS Sans Serif", 8 ;
+		STYLE "BT" ;
+		COLOR RGB(,,,192,192,192)
+	@ 7.462,43.600 CLEAR TO 8.462,62.933
+	@ 7.462,43.600 SAY M.cuit ;
+		SIZE 1.000,19.333, 0.000 ;
+		FONT "MS Sans Serif", 8 ;
+		STYLE "BT" ;
+		COLOR RGB(,,,192,192,192)
+	@ 7.462,79.800 CLEAR TO 8.462,90.967
+	@ 7.462,79.800 SAY M.ef ;
+		SIZE 1.000,11.167, 0.000 ;
+		FONT "MS Sans Serif", 8 ;
+		STYLE "BT" ;
+		COLOR RGB(,,,192,192,192)
+ENDIF
+IF NOT EMPTY(currwind)
+	ACTIVATE WINDOW (currwind) SAME
+ENDIF

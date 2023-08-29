@@ -1,0 +1,466 @@
+*       *********************************************************
+*       *                                                         
+*       * 25/02/1999            PROVEDO.SPR              19:06:08 
+*       *                                                         
+*       *********************************************************
+*       *                                                         
+*       * Nombre del autor                                        
+*       *                                                         
+*       * Copyright (c) 1999 Nombre de la empresa                 
+*       * Dirección                                               
+*       * Ciudad,     C.P.                                        
+*       * País                                              
+*       *                                                         
+*       * Description:                                            
+*       * Este programa lo ha generado automáticamente GENSCRN.    
+*       *                                                         
+*       *********************************************************
+
+
+#REGION 0
+REGIONAL m.currarea, m.talkstat, m.compstat
+
+IF SET("TALK") = "ON"
+	SET TALK OFF
+	m.talkstat = "ON"
+ELSE
+	m.talkstat = "OFF"
+ENDIF
+m.compstat = SET("COMPATIBLE")
+SET COMPATIBLE FOXPLUS
+
+m.rborder = SET("READBORDER")
+SET READBORDER ON
+
+m.currarea = SELECT()
+
+
+*       *********************************************************
+*       *                                                         
+*       *   PROVEDO/Windows Bases de datos, índices, relaciones   
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("provedor")
+	SELECT provedor
+	SET ORDER TO TAG "nombre"
+ELSE
+	SELECT 0
+	USE (LOCFILE("provedor.dbf","DBF","Buscar  provedor?"));
+		AGAIN ALIAS provedor ;
+		ORDER TAG "nombre"
+ENDIF
+
+IF USED("ivacompr")
+	SELECT ivacompr
+	SET ORDER TO 0
+ELSE
+	SELECT 0
+	USE (LOCFILE("ivacompr.dbf","DBF","Buscar  ivacompr?"));
+		AGAIN ALIAS ivacompr ;
+		ORDER 0
+ENDIF
+
+SELECT provedor
+
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Definiciones de ventana             
+*       *                                                         
+*       *********************************************************
+*
+
+IF NOT WEXIST("proveedor") ;
+	OR UPPER(WTITLE("PROVEEDOR")) == "PROVEEDOR.PJX" ;
+	OR UPPER(WTITLE("PROVEEDOR")) == "PROVEEDOR.SCX" ;
+	OR UPPER(WTITLE("PROVEEDOR")) == "PROVEEDOR.MNX" ;
+	OR UPPER(WTITLE("PROVEEDOR")) == "PROVEEDOR.PRG" ;
+	OR UPPER(WTITLE("PROVEEDOR")) == "PROVEEDOR.FRX" ;
+	OR UPPER(WTITLE("PROVEEDOR")) == "PROVEEDOR.QPR"
+	DEFINE WINDOW proveedor ;
+		AT 0.643, 8.600 ;
+		SIZE 16.769,84.600 ;
+		TITLE "manejo de proveedores" ;
+		FONT "MS Sans Serif", 8 ;
+		FLOAT ;
+		CLOSE ;
+		NOMINIMIZE ;
+		SYSTEM ;
+		COLOR RGB(,,,192,192,192)
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *   PROVEDO/Windows Código de configuración - SECCION 2   
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+DECLARE arr_ef(4)
+arr_ef[1]= "R.I."
+arr_ef[2]= "R.N.I."
+arr_ef[3]= "EXEN."
+arr_ef[4] = "N.A."
+SEN = .F.
+select provedor
+scatter memvar
+
+*       *********************************************************
+*       *                                                         
+*       *        PROVEDO/Windows Distribución de pantalla         
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+IF WVISIBLE("proveedor")
+	ACTIVATE WINDOW proveedor SAME
+ELSE
+	ACTIVATE WINDOW proveedor NOSHOW
+ENDIF
+@ 11.769,0.000 TO 16.769,84.600 ;
+	PATTERN 1 ;
+	PEN 1, 8 ;
+	COLOR RGB(,,,0,128,0)
+@ 3.769,4.400 SAY "apellido y nombre" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT"
+@ 6.538,4.400 SAY "CUIT" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT"
+@ 8.385,4.400 SAY "estado fiscal" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT"
+@ 1.000,4.400 SAY "codigo" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT"
+@ 3.769,26.800 GET m.nombre ;
+	SIZE 1.000,27.333 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	PICTURE "@K!" ;
+	DISABLE
+@ 6.538,26.800 GET m.cuit ;
+	SIZE 1.000,14.333 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	PICTURE "@K 99-99999999-9" ;
+	DISABLE
+@ 8.308,26.400 GET M.EF ;
+	PICTURE "@^" ;
+	FROM ARR_EF ;
+	SIZE 1.538,12.167 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	DISABLE
+@ 11.923,52.800 GET m.ACEPTAR ;
+	PICTURE "@*VN ACEPTAR;CANCELAR" ;
+	SIZE 2.000,12.000,0.615 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s2t14xy2p() ;
+	DISABLE
+@ 11.923,0.000 GET m.ACCION ;
+	PICTURE "@*BHN " + ;
+		(LOCFILE("..\wizards\wizbmps\wznew.bmp","BMP|ICO|PCT|ICN","¿Dónde está wznew?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzdelete.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzdelete?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzedit.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzedit?")) ;
+	SIZE 2.077,16.200,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	VALID _s2t14xy59()
+@ 6.462,68.200 GET M.ORDEN ;
+	PICTURE "@*RVN NOMBRE;CUIT;CODIGO" ;
+	SIZE 1.308,13.000,0.308 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2t14xy6b()
+@ 14.615,0.000 GET m.movimiento ;
+	PICTURE "@*BHN " + ;
+		(LOCFILE("..\wizards\wizbmps\wztop.bmp","BMP|ICO|PCT|ICN","¿Dónde está wztop?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzback.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzback?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzlocate.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzlocate?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wznext.bmp","BMP|ICO|PCT|ICN","¿Dónde está wznext?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzend.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzend?")) ;
+	SIZE 2.000,9.400,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	VALID _s2t14xy78()
+@ 11.923,69.600 GET m.salir ;
+	PICTURE "@*BHT " + ;
+		(LOCFILE("..\wizards\wizbmps\wzclose.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzclose?")) ;
+	SIZE 4.692,14.600,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8
+@ 1.000,26.800 SAY M.cod_prov ;
+	SIZE 1.000,5.333 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	PICTURE "@L"
+@ 7.385,57.600 SAY (LOCFILE("sortdlg.bmp","BMP|ICO|PCT|ICN", "¿Dónde está sortdlg?" )) BITMAP ;
+	SIZE 2.308,6.400 ;
+	ISOMETRIC ;
+	STYLE "T"
+
+IF NOT WVISIBLE("proveedor")
+	ACTIVATE WINDOW proveedor
+ENDIF
+
+READ CYCLE MODAL ;
+	SHOW _s2t14xy8n()
+
+RELEASE WINDOW proveedor
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Cerrando bases de datos             
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("provedor")
+	SELECT provedor
+	USE
+ENDIF
+
+IF USED("ivacompr")
+	SELECT ivacompr
+	USE
+ENDIF
+
+SELECT (m.currarea)
+
+
+#REGION 0
+
+SET READBORDER &rborder
+
+IF m.talkstat = "ON"
+	SET TALK ON
+ENDIF
+IF m.compstat = "ON"
+	SET COMPATIBLE ON
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XY2P           m.ACEPTAR VALID                    
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PROVEDO,     Record Number:   12   
+*       * Variable:            m.ACEPTAR                          
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      1                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xy2p     &&  m.ACEPTAR VALID
+#REGION 1
+IF M.ACEPTAR = 1
+	DO CASE
+	CASE M.ACCION = 1
+			IF .NOT. M.NOMBRE >  "    "
+				WAIT WINDOW NOWAIT "ESCRIBA EL NOMBRE"
+				SEN = .T.
+				_CUROBJ = 2
+			ENDIF
+			IF M.CUIT > "         "
+				SET ORDER TO 2
+				SEEK M.CUIT
+				IF FOUND()
+					WAIT WINDOW NOWAIT "CUIT REPETIDO"
+					SEN = .T.
+					_CUROBJ = 3
+				ENDIF
+			ELSE
+				WAIT WINDOW NOWAIT "ESCRIBA EL CUIT"
+				SEN = .T.
+					_CUROBJ = 3
+			ENDIF
+			IF SEN = .F.
+				INSERT INTO provedor FROM MEMVAR
+				SHOW GETS DISABLE
+				SHOW GET M.ACCION ENABLE
+				SHOW GET M.MOVIMIENTO ENABLE
+				SHOW GET M.ACEPTAR DISABLE
+				SHOW GET M.ORDEN ENABLE
+				SHOW GET M.SALIR ENABLE
+			ELSE
+				SEN = .F.
+			ENDIF
+	CASE M.ACCION = 3
+		IF M.CUIT > "  -        - "
+			IF M.CUIT <> CUIT
+				SET ORDER TO 2
+				SEEK M.CUIT
+				IF FOUND()
+					WAIT WINDOW NOWAIT "CUIT REPETIDO"
+					SEN = .T.
+					_CUROBJ = 3
+				ENDIF
+			ENDIF
+		ELSE
+				WAIT WINDOW NOWAIT "ESCRIBA EL CUIT"
+				SEN = .T.
+				_CUROBJ = 3
+		ENDIF
+		SET ORDER TO 3
+		SEEK M.COD_PROV
+		IF .NOT. M.NOMBRE > "    "	
+			WAIT WINDOW NOWAIT "ESCRIBA EL NOMBRE"
+			SEN = .T.
+			_CUROBJ = 2
+		ENDIF
+		IF SEN = .F.
+			SET ORDER TO 3
+			SEEK M.COD_prov
+			GATHER MEMVAR
+			SHOW GETS DISABLE
+			SHOW GET M.ACCION ENABLE
+			SHOW GET M.MOVIMIENTO ENABLE
+			SHOW GET M.ACEPTAR DISABLE
+			SHOW GET M.ORDEN ENABLE
+			SHOW GET M.SALIR ENABLE
+		ELSE
+			SEN = .F.
+		ENDIF
+ENDCASE
+ELSE
+	SHOW GETS DISABLE
+	SHOW GET M.ACCION ENABLE
+	SHOW GET M.MOVIMIENTO ENABLE
+	SHOW GET M.ACEPTAR DISABLE
+	SHOW GET M.SALIR ENABLE
+	SHOW GET M.ORDEN ENABLE
+ENDIF
+set order to ORDEN
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XY59           m.ACCION VALID                     
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PROVEDO,     Record Number:   13   
+*       * Variable:            m.ACCION                           
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      2                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xy59     &&  m.ACCION VALID
+#REGION 1
+DO CASE
+CASE M.ACCION = 1
+	SET ORDER TO 3
+	GO BOTTOM
+	SCATTER MEMVAR BLANK
+	M.COD_PROV = COD_PROV + 1
+	SHOW GETS ENABLE
+	SHOW GET M.ACCION DISABLE
+	SHOW GET M.MOVIMIENTO DISABLE
+	SHOW GET M.SALIR DISABLE
+	SHOW GET M.ORDEN DISABLE
+	_CUROBJ = 1
+CASE M.ACCION = 2
+	do borrapro.spr
+	show gets
+CASE M.ACCION = 3
+	SHOW GETS ENABLE
+	SHOW GET M.ACCION DISABLE
+	SHOW GET M.MOVIMIENTO DISABLE
+	SHOW GET M.SALIR DISABLE
+	SHOW GET M.ORDEN DISABLE
+	SCATTER MEMVAR
+	_CUROBJ = 1
+	M.COD_prov = COD_prov
+ENDCASE
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XY6B           M.ORDEN VALID                      
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PROVEDO,     Record Number:   14   
+*       * Variable:            M.ORDEN                            
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Radio Button                       
+*       * Snippet Number:      3                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xy6b     &&  M.ORDEN VALID
+#REGION 1
+SET ORDER TO ORDEN
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XY78           m.movimiento VALID                 
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PROVEDO,     Record Number:   15   
+*       * Variable:            m.movimiento                       
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      4                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xy78     &&  m.movimiento VALID
+#REGION 1
+DO P_MUEVE.PRG
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XY8N           Nivel de lectura SHOW              
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PROVEDO                            
+*       * Called By:           READ Statement                     
+*       * Snippet Number:      5                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xy8n     && Read Level Show
+PRIVATE currwind
+STORE WOUTPUT() TO currwind
+*
+* Código SHOW de la pantalla: PROVEDO
+*
+#REGION 1
+IF SYS(2016) = "PROVEEDOR" OR SYS(2016) = "*"
+	ACTIVATE WINDOW proveedor SAME
+	@ 1.000,26.800 SAY M.cod_prov ;
+		SIZE 1.000,5.333, 0.000 ;
+		FONT "MS Sans Serif", 8 ;
+		STYLE "B" ;
+		PICTURE "@L"
+ENDIF
+IF NOT EMPTY(currwind)
+	ACTIVATE WINDOW (currwind) SAME
+ENDIF

@@ -1,0 +1,485 @@
+*       *********************************************************
+*       *                                                         
+*       * 25/02/1999           PERSONA2.SPR              19:06:07 
+*       *                                                         
+*       *********************************************************
+*       *                                                         
+*       * Nombre del autor                                        
+*       *                                                         
+*       * Copyright (c) 1999 Nombre de la empresa                 
+*       * Dirección                                               
+*       * Ciudad,     C.P.                                        
+*       * País                                              
+*       *                                                         
+*       * Description:                                            
+*       * Este programa lo ha generado automáticamente GENSCRN.    
+*       *                                                         
+*       *********************************************************
+
+
+#REGION 0
+REGIONAL m.currarea, m.talkstat, m.compstat
+
+IF SET("TALK") = "ON"
+	SET TALK OFF
+	m.talkstat = "ON"
+ELSE
+	m.talkstat = "OFF"
+ENDIF
+m.compstat = SET("COMPATIBLE")
+SET COMPATIBLE FOXPLUS
+
+m.rborder = SET("READBORDER")
+SET READBORDER ON
+
+m.currarea = SELECT()
+
+
+*       *********************************************************
+*       *                                                         
+*       *  PERSONA2/Windows Bases de datos, índices, relaciones   
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("ivacompr")
+	SELECT ivacompr
+	SET ORDER TO 0
+ELSE
+	SELECT 0
+	USE (LOCFILE("ivacompr.dbf","DBF","Buscar  ivacompr?"));
+		AGAIN ALIAS ivacompr ;
+		ORDER 0
+ENDIF
+
+IF USED("ivaventa")
+	SELECT ivaventa
+	SET ORDER TO 0
+ELSE
+	SELECT 0
+	USE (LOCFILE("ivaventa.dbf","DBF","Buscar  ivaventa?"));
+		AGAIN ALIAS ivaventa ;
+		ORDER 0
+ENDIF
+
+SELECT ivacompr
+
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Definiciones de ventana             
+*       *                                                         
+*       *********************************************************
+*
+
+IF NOT WEXIST("abonados") ;
+	OR UPPER(WTITLE("ABONADOS")) == "ABONADOS.PJX" ;
+	OR UPPER(WTITLE("ABONADOS")) == "ABONADOS.SCX" ;
+	OR UPPER(WTITLE("ABONADOS")) == "ABONADOS.MNX" ;
+	OR UPPER(WTITLE("ABONADOS")) == "ABONADOS.PRG" ;
+	OR UPPER(WTITLE("ABONADOS")) == "ABONADOS.FRX" ;
+	OR UPPER(WTITLE("ABONADOS")) == "ABONADOS.QPR"
+	DEFINE WINDOW abonados ;
+		AT 1.071, 8.400 ;
+		SIZE 15.077,82.200 ;
+		TITLE "MANEJO DE ABONADOS" ;
+		FONT "MS Sans Serif", 8 ;
+		FLOAT ;
+		CLOSE ;
+		NOMINIMIZE ;
+		SYSTEM ;
+		FILL FILE LOCFILE("ABONADOS.BMP","BMP|ICO|PCT|ICN", ;
+			"¿Dónde está abonados?")
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *  PERSONA2/Windows Código de configuración - SECCION 2   
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+DECLARE arr_ef(5)
+arr_ef[1]= "R.I."
+arr_ef[2]= "R.N.I."
+arr_ef[3]= "EXEN."
+arr_ef[4]= "N.A."
+arr_ef[5]= "MONO"
+SEN = .F.
+select abonados
+scatter memvar
+
+*       *********************************************************
+*       *                                                         
+*       *        PERSONA2/Windows Distribución de pantalla        
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+IF WVISIBLE("abonados")
+	ACTIVATE WINDOW abonados SAME
+ELSE
+	ACTIVATE WINDOW abonados NOSHOW
+ENDIF
+@ 9.231,0.000 TO 15.077,82.200 ;
+	PATTERN 1 ;
+	PEN 1, 0 ;
+	COLOR RGB(,,,0,0,128)
+@ 1.000,2.000 SAY "apellido y nombre" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT"
+@ 2.846,2.400 SAY "CUIT" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT"
+@ 4.692,2.400 SAY "estado fiscal" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT"
+@ 12.923,2.400 GET m.movimiento ;
+	PICTURE "@*BHN " + ;
+		(LOCFILE("..\wizards\wizbmps\wztop.bmp","BMP|ICO|PCT|ICN","¿Dónde está wztop?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzback.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzback?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzlocate.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzlocate?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wznext.bmp","BMP|ICO|PCT|ICN","¿Dónde está wznext?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzend.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzend?")) ;
+	SIZE 2.000,8.400,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	VALID _s2t14xxcl()
+@ 1.000,24.400 GET m.nombre ;
+	SIZE 1.000,27.333 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	PICTURE "@K!" ;
+	DISABLE
+@ 2.846,24.400 GET m.cuit ;
+	SIZE 1.000,14.333 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	PICTURE "@K 99-99999999-9" ;
+	DISABLE
+@ 4.615,24.000 GET M.EF ;
+	PICTURE "@^" ;
+	FROM ARR_EF ;
+	SIZE 1.538,12.167 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	DISABLE
+@ 10.154,50.400 GET m.ACEPTAR ;
+	PICTURE "@*VN ACEPTAR;CANCELAR" ;
+	SIZE 2.000,12.000,0.769 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s2t14xxeb() ;
+	DISABLE
+@ 10.154,2.400 GET m.ACCION ;
+	PICTURE "@*BHN " + ;
+		(LOCFILE("..\wizards\wizbmps\wznew.bmp","BMP|ICO|PCT|ICN","¿Dónde está wznew?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzdelete.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzdelete?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzedit.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzedit?")) ;
+	SIZE 2.077,14.600,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	VALID _s2t14xxh9()
+@ 10.154,67.200 GET m.salir ;
+	PICTURE "@*BHT " + ;
+		(LOCFILE("..\wizards\wizbmps\wzclose.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzclose?")) ;
+	SIZE 4.769,14.600,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8
+@ 5.615,65.800 GET M.ORDEN ;
+	PICTURE "@*RVN NOMBRE;CUIT" ;
+	SIZE 1.308,13.000,0.308 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2t14xxik() ;
+	DISABLE
+@ 6.538,2.000 SAY "sucursales" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT"
+@ 6.692,24.600 GET m.sucursales ;
+	SPINNER 1.000, 1, 99 ;
+	PICTURE "@Z 99" ;
+	SIZE 1.000, 2.833 ;
+	DEFAULT 1.000 ;
+	DISABLE ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B"
+@ 5.538,57.600 SAY (LOCFILE("sortdlg.bmp","BMP|ICO|PCT|ICN", "¿Dónde está sortdlg?" )) BITMAP ;
+	SIZE 2.308,6.400 ;
+	ISOMETRIC ;
+	STYLE "T"
+@ 0.000,0.000 TO 15.077,82.200 ;
+	PEN 1, 8
+
+IF NOT WVISIBLE("abonados")
+	ACTIVATE WINDOW abonados
+ENDIF
+
+READ CYCLE MODAL
+
+RELEASE WINDOW abonados
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Cerrando bases de datos             
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("ivacompr")
+	SELECT ivacompr
+	USE
+ENDIF
+
+IF USED("ivaventa")
+	SELECT ivaventa
+	USE
+ENDIF
+
+SELECT (m.currarea)
+
+
+#REGION 0
+
+SET READBORDER &rborder
+
+IF m.talkstat = "ON"
+	SET TALK ON
+ENDIF
+IF m.compstat = "ON"
+	SET COMPATIBLE ON
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XXCL           m.movimiento VALID                 
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PERSONA2,     Record Number:    8  
+*       * Variable:            m.movimiento                       
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      1                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xxcl     &&  m.movimiento VALID
+#REGION 1
+DO CASE
+CASE M.MOVIMIENTO = 1
+	GO TOP
+	WAIT WINDOW "PRINCIPIO DEL ARCHIVO" NOWAIT
+CASE M.MOVIMIENTO = 4
+	if .not. eof()
+		SKIP
+	else
+		WAIT WINDOW "FIN DE ARCHIVO" NOWAIT
+		GO TOP
+	ENDIF
+CASE M.MOVIMIENTO = 3
+	BROWSE fields nombre, cuit, ef , sucursales NOMODIFY NOAPPEND NODELETE
+CASE M.MOVIMIENTO = 2
+	if .not. bof()
+		SKIP - 1
+	else
+		WAIT WINDOW "PRINCIPIO DE ARCHIVO" NOWAIT
+		GO BOTTOM
+	ENDIF
+CASE M.MOVIMIENTO = 5
+	GO BOTTOM
+	WAIT WINDOW "FIN DEL ARCHIVO " NOWAIT
+ENDCASE
+SCATTER MEMVAR
+SHOW GETS
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XXEB           m.ACEPTAR VALID                    
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PERSONA2,     Record Number:   12  
+*       * Variable:            m.ACEPTAR                          
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      2                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xxeb     &&  m.ACEPTAR VALID
+#REGION 1
+IF M.ACEPTAR = 1
+	DO CASE
+	CASE M.ACCION = 1
+			SET ORDER TO 3
+			if reccount() = 0
+				m.codigo = chr(40)
+			else
+				go bottom
+				m.codigo= chr(asc(codigo)+ 1)
+			endif
+			IF M.NOMBRE > "  "
+				set order to 1
+				seek m.nombre
+				if found()
+					wait window NOWAIT " YA EXISTE ESE NOMBRE "
+					SEN = .T.
+					_CUROBJ = 2
+				ENDIF
+			ELSE
+				WAIT WINDOW NOWAIT "ESCRIBA EL NOMBRE"
+				SEN = .T.
+				_CUROBJ = 2
+			ENDIF
+			IF M.CUIT > "         "
+				SET ORDER TO 2
+				SEEK M.CUIT
+				IF FOUND()
+					WAIT WINDOW NOWAIT "CUIT REPETIDO"
+					SEN = .T.
+					_CUROBJ = 3
+				ENDIF
+			ELSE
+				WAIT WINDOW NOWAIT "ESCRIBA EL CUIT"
+				SEN = .T.
+					_CUROBJ = 3
+			ENDIF
+			IF SEN = .F.
+				INSERT INTO abonados FROM MEMVAR
+				SHOW GETS DISABLE
+				SHOW GET M.ACCION ENABLE
+				SHOW GET M.MOVIMIENTO ENABLE
+				SHOW GET M.ACEPTAR DISABLE
+				SHOW GET M.SALIR ENABLE
+			ELSE
+				SEN = .F.
+			ENDIF
+	CASE M.ACCION = 3
+		IF M.CUIT > "  -        - "
+			IF M.CUIT <> CUIT
+				SET ORDER TO 2
+				SEEK M.CUIT
+				IF FOUND()
+					WAIT WINDOW NOWAIT "CUIT REPETIDO"
+					SEN = .T.
+					_CUROBJ = 3
+				ENDIF
+			ENDIF
+		ELSE
+				WAIT WINDOW NOWAIT "ESCRIBA EL CUIT"
+				SEN = .T.
+				_CUROBJ = 3
+		ENDIF
+		SET ORDER TO 3
+		SEEK M.CODIGO
+		IF M.NOMBRE > "    "	
+			IF M.NOMBRE <> NOMBRE
+				set order to 1
+				seek m.nombre
+				if found()
+					wait window NOWAIT " YA EXISTE ESE NOMBRE "
+					SEN = .T.
+					_CUROBJ = 2
+				ENDIF
+			ENDIF
+		ELSE
+			WAIT WINDOW NOWAIT "ESCRIBA EL NOMBRE"
+			SEN = .T.
+			_CUROBJ = 2
+		ENDIF
+		IF SEN = .F.
+			SET ORDER TO 3
+			SEEK M.CODIGO
+			GATHER MEMVAR
+			SHOW GETS DISABLE
+			SHOW GET M.ACCION ENABLE
+			SHOW GET M.MOVIMIENTO ENABLE
+			SHOW GET M.ACEPTAR DISABLE
+			SHOW GET M.SALIR ENABLE
+		ELSE
+			SEN = .F.
+		ENDIF
+ENDCASE
+ELSE
+	SHOW GETS DISABLE
+	SHOW GET M.ACCION ENABLE
+	SHOW GET M.MOVIMIENTO ENABLE
+	SHOW GET M.ACEPTAR DISABLE
+	SHOW GET M.SALIR ENABLE
+ENDIF
+SET ORDER TO m.orden
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XXH9           m.ACCION VALID                     
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PERSONA2,     Record Number:   13  
+*       * Variable:            m.ACCION                           
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      3                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xxh9     &&  m.ACCION VALID
+#REGION 1
+DO CASE
+CASE M.ACCION = 1
+	SCATTER MEMVAR BLANK
+	SHOW GETS ENABLE
+	SHOW GET M.ACCION DISABLE
+	SHOW GET M.MOVIMIENTO DISABLE
+	SHOW GET M.SALIR DISABLE
+	show get m.orden disable
+	_CUROBJ = 2
+CASE M.ACCION = 2
+	do borrabo.spr
+	show gets
+CASE M.ACCION = 3
+	SHOW GETS ENABLE
+	SHOW GET M.ACCION DISABLE
+	SHOW GET M.MOVIMIENTO DISABLE
+	show get m.orden disable
+	SHOW GET M.SALIR DISABLE
+	SCATTER MEMVAR
+	_CUROBJ = 2
+	M.CODIGO = CODIGO
+
+ENDCASE
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XXIK           M.ORDEN VALID                      
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PERSONA2,     Record Number:   15  
+*       * Variable:            M.ORDEN                            
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Radio Button                       
+*       * Snippet Number:      4                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xxik     &&  M.ORDEN VALID
+#REGION 1
+SET ORDER TO M.ORDEN
+SHOW GETS

@@ -1,0 +1,1108 @@
+*       *********************************************************
+*       *                                                         
+*       * 14/05/99            IVACOMPR.SPR               10:00:10 
+*       *                                                         
+*       *********************************************************
+*       *                                                         
+*       * Nombre del autor                                        
+*       *                                                         
+*       * Copyright (c) 1999 Nombre de la empresa                 
+*       * Dirección                                               
+*       * Ciudad,     C.P.                                        
+*       * País                                              
+*       *                                                         
+*       * Description:                                            
+*       * Este programa lo ha generado automáticamente GENSCRN.    
+*       *                                                         
+*       *********************************************************
+
+
+#REGION 0
+REGIONAL m.currarea, m.talkstat, m.compstat
+
+IF SET("TALK") = "ON"
+	SET TALK OFF
+	m.talkstat = "ON"
+ELSE
+	m.talkstat = "OFF"
+ENDIF
+m.compstat = SET("COMPATIBLE")
+SET COMPATIBLE FOXPLUS
+
+m.rborder = SET("READBORDER")
+SET READBORDER ON
+
+m.currarea = SELECT()
+
+
+*       *********************************************************
+*       *                                                         
+*       *  S6010026/Windows Bases de datos, índices, relaciones   
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("provedor")
+	SELECT provedor
+	SET ORDER TO TAG "cod_prov"
+ELSE
+	SELECT 0
+	USE (LOCFILE("provedor.dbf","DBF","Buscar  provedor?"));
+		AGAIN ALIAS provedor ;
+		ORDER TAG "cod_prov"
+ENDIF
+
+IF USED("ivacompr")
+	SELECT ivacompr
+	SET ORDER TO TAG "fecha"
+ELSE
+	SELECT 0
+	USE (LOCFILE("ivacompr.dbf","DBF","Buscar  ivacompr?"));
+		AGAIN ALIAS ivacompr ;
+		ORDER TAG "fecha"
+ENDIF
+
+SELECT ivacompr
+
+SET RELATION OFF INTO provedor
+SET RELATION TO cod_prov INTO provedor ADDITIVE
+
+SELECT ivacompr
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Definiciones de ventana             
+*       *                                                         
+*       *********************************************************
+*
+
+IF NOT WEXIST("ivacompras") ;
+	OR UPPER(WTITLE("IVACOMPRAS")) == "IVACOMPRAS.PJX" ;
+	OR UPPER(WTITLE("IVACOMPRAS")) == "IVACOMPRAS.SCX" ;
+	OR UPPER(WTITLE("IVACOMPRAS")) == "IVACOMPRAS.MNX" ;
+	OR UPPER(WTITLE("IVACOMPRAS")) == "IVACOMPRAS.PRG" ;
+	OR UPPER(WTITLE("IVACOMPRAS")) == "IVACOMPRAS.FRX" ;
+	OR UPPER(WTITLE("IVACOMPRAS")) == "IVACOMPRAS.QPR"
+	DEFINE WINDOW ivacompras ;
+		AT 0.368, 1.000 ;
+		SIZE 25.000,108.200 ;
+		TITLE "Iva Compras" ;
+		FONT "MS Sans Serif", 8 ;
+		FLOAT ;
+		NOCLOSE ;
+		NOMINIMIZE ;
+		NONE ;
+		FILL FILE LOCFILE("FOCOMPRA.BMP","BMP|ICO|PCT|ICN", ;
+			"¿Dónde está focompra?")
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *  IVACOMPR/Windows Código de configuración - SECCION 2   
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+select provedor
+COUNT FOR ABONADOS.CODIGO $ PROVEDOR.ABONADO TO A
+IF A = 0
+	WAIT WINDOW NOWAIT "NO EXISTE RELACION CON ALGUN PROVEEDOR"
+	RETURN
+ENDIF
+
+SET FILTER TO ABONADOS.CODIGO $ PROVEDOR.ABONADO
+scatter memvar
+
+SELECT IVACOMPR
+set filter to ABONADOS.CODIGO $ IVACOMPR.ABONADO
+go top
+scatter memvar
+select provedor
+scatter memvar
+
+select ivacompr
+
+DECLARE COMPROB(8)
+COMPROB[1] = "FC A"
+COMPROB[2] = "ND A"
+COMPROB[3] = "NC A"
+COMPROB[4] = "FC B"
+COMPROB[5] = "ND B"
+COMPROB[6] = "NC B"
+COMPROB[7] = "FC C"
+COMPROB[8] = "T   "
+
+DECLARE A_IVA(3,2)
+A_IVA[1,1] = 1
+A_IVA[2,1] = 2
+A_IVA[3,1] = 3
+A_IVA[1,2] = 0.27
+A_IVA[2,2] = 0.21
+A_IVA[3,2] = 0.105
+
+DECLARE MESES(12,1)
+store "ENERO" to MESES[1]
+store "FEBRERO" to MESES[2]
+store "MARZO" to MESES[3]
+store "ABRIL" to MESES[4]
+store "MAYO" to MESES[5]
+store "JUNIO" to MESES[6]
+store "JULIO" to MESES[7]
+store "AGOSTO" to MESES[8]
+store "SEPTIEMBRE" to MESES[9]
+store "OCTUBRE" to MESES[10]
+store "NOVIEMBRE" to MESES[11]
+store "DICIEMBRE" to MESES[12]
+
+m.tipo = " "
+SEN = .F.
+m.modi = .f.
+M.PRIMERO = 1
+M.ELEM = 8
+M.TIPO = 1
+M.TICKET = .F.
+M.ANT_NOMB = " "
+M.ANT_NUM = "  "
+M.NUMREC = 0
+m.iva27 = .f.
+m.iva = 0.21
+set compatible on
+
+M.INFORME = .F.
+
+
+
+#REGION 1
+DEFINE POPUP _s4z0lftpi ;
+	PROMPT FIELD Provedor.nombre + transform( Provedor.cod_prov, "    ") ;
+	SCROLL
+
+*       *********************************************************
+*       *                                                         
+*       *        IVACOMPR/Windows Distribución de pantalla        
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+IF WVISIBLE("ivacompras")
+	ACTIVATE WINDOW ivacompras SAME
+ELSE
+	ACTIVATE WINDOW ivacompras NOSHOW
+ENDIF
+@ 19.308,0.000 TO 25.000,31.400 ;
+	PATTERN 1 ;
+	PEN 1, 8 ;
+	COLOR RGB(,,,0,128,128)
+@ 19.462,31.200 TO 25.000,108.200 ;
+	PATTERN 1 ;
+	PEN 1, 8 ;
+	COLOR RGB(192,192,192,192,192,192)
+@ 0.000,0.000 TO 1.923,108.200 ;
+	PATTERN 1 ;
+	PEN 1, 0 ;
+	COLOR RGB(192,192,192,192,192,192)
+@ 12.077,33.600 SAY "Importe net grav" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 14.231,33.600 SAY "Conc. no grav." ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 15.308,33.600 SAY "Operac.exentas" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 12.769,79.200 SAY "Iva general" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 14.846,79.200 SAY "Iva no inscripto" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 16.385,33.600 SAY "Ret.ingresos brutos" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 17.462,33.600 SAY "Ret. pago a cta." ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 17.000,79.200 SAY "Importe" ;
+	FONT "MS Sans Serif", 10 ;
+	STYLE "B" ;
+	COLOR RGB(255,255,255,128,0,128)
+@ 2.846,32.600 SAY "Fecha" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 2.846,54.200 SAY "Tipo" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 2.846,75.800 SAY "Numero" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 5.769,32.800 SAY "Nombre" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 7.462,32.800 SAY "Cuit" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 7.462,64.800 SAY "E.F." ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 2.846,41.200 GET M.FECHA ;
+	SIZE 1.000,11.400 ;
+	DEFAULT {  /  /  } ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "@E" ;
+	DISABLE
+@ 1.923,0.200 GET M.PROV ;
+ 	PICTURE "@&N" ;
+	POPUP _s4z0lftpi ;
+	SIZE 17.308,31.000 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "" ;
+	WHEN _s4z0lftry() ;
+	VALID _s4z0lftt8() ;
+	DISABLE
+@ 2.769,62.400 GET M.TIPO ;
+	PICTURE "@^" ;
+	FROM COMPROB ;
+	SIZE 1.538,10.167 ;
+	RANGE M.PRIMERO, M.ELEM ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	WHEN _s4z0lfttp() ;
+	DISABLE
+@ 2.846,84.400 GET M.NUMERO ;
+	SIZE 1.000,18.400 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "@K 9999-99999999          " ;
+	DISABLE
+@ 19.462,7.200 GET M.TICKET ;
+	PICTURE "@*C TICKET" ;
+	SIZE 1.308,11.833 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s4z0lftuf() ;
+	DISABLE ;
+	COLOR ,,,,,,,,RGB(255,255,0,,,,),RGB(255,255,0,,,,)
+@ 5.615,41.200 SAY M.nombre ;
+	SIZE 1.000,43.333 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT"
+@ 7.462,41.200 SAY M.cuit ;
+	SIZE 1.000,17.333 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT"
+@ 7.462,74.800 SAY M.ef ;
+	SIZE 1.000,9.333 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT"
+@ 12.077,62.800 GET m.impnetgrab ;
+	SIZE 1.000,13.600 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "999999.99" ;
+	VALID _s4z0lftve() ;
+	DISABLE
+@ 17.077,94.200 GET m.imporfac ;
+	SIZE 1.000,13.000 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "9999999.99" ;
+	VALID _s4z0lftw3() ;
+	DISABLE
+@ 14.385,62.800 GET m.conograb ;
+	SIZE 1.000,13.600 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "99999.99" ;
+	VALID _s4z0lftwi() ;
+	DISABLE
+@ 15.538,62.800 GET m.operexen ;
+	SIZE 1.000,13.600 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "99999.99" ;
+	VALID _s4z0lftx7() ;
+	DISABLE
+@ 13.000,96.000 SAY m.ivageneral ;
+	SIZE 1.000,11.200 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "999999.99"
+@ 14.846,96.000 SAY m.ivanoins ;
+	SIZE 1.000,11.200 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "999999.99"
+@ 16.692,62.800 GET m.ret_ingbru ;
+	SIZE 1.000,13.600 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "99999.99" ;
+	VALID _s4z0lftxz() ;
+	DISABLE
+@ 17.846,62.800 GET m.ret_pcta ;
+	SIZE 1.000,13.600 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "99999.99" ;
+	VALID _s4z0lftyi() ;
+	DISABLE
+@ 20.308,79.200 GET m.ACEPTAR ;
+	PICTURE "@*VN ACEPTAR;CANCELAR" ;
+	SIZE 2.000,12.000,0.692 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s4z0lftz4() ;
+	DISABLE
+@ 20.154,33.400 GET m.ACCION ;
+	PICTURE "@*BHN " + ;
+		(LOCFILE("..\wizards\wizbmps\wznew.bmp","BMP|ICO|PCT|ICN","¿Dónde está wznew?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzdelete.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzdelete?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzedit.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzedit?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzprint.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzprint?")) ;
+	SIZE 2.000,10.200,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	VALID _s4z0lfu3m()
+@ 22.846,33.400 GET m.movimiento ;
+	PICTURE "@*BHN " + ;
+		(LOCFILE("..\wizards\wizbmps\wztop.bmp","BMP|ICO|PCT|ICN","¿Dónde está wztop?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzback.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzback?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzlocate.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzlocate?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wznext.bmp","BMP|ICO|PCT|ICN","¿Dónde está wznext?")) + ";" + ;
+		(LOCFILE("..\wizards\wizbmps\wzend.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzend?")) ;
+	SIZE 2.000,8.000,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	VALID _s4z0lfu5t()
+@ 21.154,7.200 GET M.ORDEN ;
+	PICTURE "@*RVN FECHA;TIPO Y CUIT" ;
+	SIZE 1.308,16.500,0.308 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s4z0lfu6t() ;
+	COLOR ,,,,,,,,RGB(0,255,0,,,,),RGB(0,255,0,,,,)
+@ 0.077,2.800 SAY Abonados.nombre ;
+	SIZE 1.000,45.333 ;
+	FONT "SansSerif", 10 ;
+	STYLE "B" ;
+	COLOR RGB(0,0,0,192,192,192)
+@ 0.077,65.200 SAY Abonados.ef ;
+	SIZE 1.000,6.167 ;
+	FONT "SansSerif", 10 ;
+	STYLE "B" ;
+	COLOR RGB(0,0,0,192,192,192)
+@ 20.308,96.000 GET m.salir ;
+	PICTURE "@*BHT " + ;
+		(LOCFILE("..\wizards\wizbmps\wzclose.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzclose?")) ;
+	SIZE 4.615,11.600,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8
+@ 10.846,50.400 GET m.iva ;
+	PICTURE "@*RVN 27%;21%;10,5%" ;
+	SIZE 1.308,10.167,0.000 ;
+	DEFAULT 2 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	DISABLE
+@ 21.923,1.800 SAY (LOCFILE("sortdlg.bmp","BMP|ICO|PCT|ICN", "¿Dónde está sortdlg?" )) BITMAP ;
+	SIZE 1.154,3.200 ;
+	ISOMETRIC ;
+	STYLE "T"
+
+IF NOT WVISIBLE("ivacompras")
+	ACTIVATE WINDOW ivacompras
+ENDIF
+
+READ CYCLE MODAL ;
+	SHOW _s4z0lfu86()
+
+RELEASE WINDOW ivacompras
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Cerrando bases de datos             
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("provedor")
+	SELECT provedor
+	USE
+ENDIF
+
+IF USED("ivacompr")
+	SELECT ivacompr
+	USE
+ENDIF
+
+SELECT (m.currarea)
+
+RELEASE POPUPS _s4z0lftpi
+
+#REGION 0
+
+SET READBORDER &rborder
+
+IF m.talkstat = "ON"
+	SET TALK ON
+ENDIF
+IF m.compstat = "ON"
+	SET COMPATIBLE ON
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S4Z0LFTRY           M.PROV WHEN                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVACOMPR,     Record Number:   23  
+*       * Variable:            M.PROV                             
+*       * Called By:           WHEN Clause                        
+*       * Object Type:         List                               
+*       * Snippet Number:      1                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s4z0lftry     &&  M.PROV WHEN
+#REGION 1
+if m.ticket = .f.
+	if ABONADOS.ef = "R.I." .OR. ABONADOS.EF = "R.N.I"
+		IF provedor.ef = "R.I."
+			M.PRIMERO = 1
+			M.ELEM = 3
+			show get m.impnetgrab enable
+			show get m.imporfac disable
+		ELSE
+			M.PRIMERO = 7
+			M.ELEM = 1
+			show get m.impnetgrab disable
+			show get m.imporfac enable
+		ENDIF
+	ELSE
+		IF provedor.ef = "R.I."
+			M.PRIMERO = 4
+			M.ELEM = 3
+		ELSE
+			M.PRIMERO = 7
+			M.ELEM = 1
+		ENDIF
+		show get m.impnetgrab disable
+		show get m.imporfac enable
+	endif
+	select provedor
+	scatter memvar
+else
+	m.primero = 8
+	m.elem = 1
+	show get m.impnetgrab disable
+	show get m.imporfac enable
+endif
+if m.modi = .f.
+	m.afecha = m.fecha
+	select ivacompr
+	scatter memvar blank
+	m.fecha = m.afecha
+	M.TIPO= 1
+	
+	select provedor
+	scatter memvar
+endif
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S4Z0LFTT8           M.PROV VALID                       
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVACOMPR,     Record Number:   23  
+*       * Variable:            M.PROV                             
+*       * Called By:           VALID Clause                       
+*       * Object Type:         List                               
+*       * Snippet Number:      2                                  
+*       *                                                         
+*       *********************************************************
+*
+
+
+FUNCTION _s4z0lftt8     &&  M.PROV VALID
+
+*       *********************************************************
+*       *                                                         
+*       * _S4Z0LFTTP           M.TIPO WHEN                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVACOMPR,     Record Number:   24  
+*       * Variable:            M.TIPO                             
+*       * Called By:           WHEN Clause                        
+*       * Object Type:         Popup                              
+*       * Snippet Number:      3                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s4z0lfttp     &&  M.TIPO WHEN
+#REGION 1
+if m.nombre = "          "
+	return .f.
+else
+	return .t.
+endif
+
+*       *********************************************************
+*       *                                                         
+*       * _S4Z0LFTUF           M.TICKET VALID                     
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVACOMPR,     Record Number:   26  
+*       * Variable:            M.TICKET                           
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      4                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s4z0lftuf     &&  M.TICKET VALID
+#REGION 1
+IF M.TICKET = .T.
+	M.PRIMERO = 8
+	M.ELEM = 1
+	M.TIPO = 1
+	M.NOMBRE = "Consumidor final"
+	M.CUIT = "-------"
+	M.EF = "C.F."
+	show get m.impnetgrab disable
+	show get m.imporfac enable
+ELSE
+	_CUROBJ = 2
+ENDIF
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S4Z0LFTVE           m.impnetgrab VALID                 
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVACOMPR,     Record Number:   30  
+*       * Variable:            m.impnetgrab                       
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Field                              
+*       * Snippet Number:      5                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s4z0lftve     &&  m.impnetgrab VALID
+#REGION 1
+if abonados.ef = "R.I"
+	m.ivageneral = m.impnetgrab * A_IVA[M.IVA,2]
+	m.ivanoins = 0
+	m.imporfac = m.impnetgrab + m.ivageneral + m.ivanoins
+else	
+	m.ivageneral = m.impnetgrab * A_IVA[M.IVA,2]
+	m.ivanoins = m.impnetgrab * A_IVA[M.IVA,2]/2
+	m.imporfac = m.impnetgrab + m.ivageneral + m.ivanoins
+endif	
+show gets
+
+*       *********************************************************
+*       *                                                         
+*       * _S4Z0LFTW3           m.imporfac VALID                   
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVACOMPR,     Record Number:   31  
+*       * Variable:            m.imporfac                         
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Field                              
+*       * Snippet Number:      6                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s4z0lftw3     &&  m.imporfac VALID
+#REGION 1
+do nito.prg
+
+*       *********************************************************
+*       *                                                         
+*       * _S4Z0LFTWI           m.conograb VALID                   
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVACOMPR,     Record Number:   32  
+*       * Variable:            m.conograb                         
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Field                              
+*       * Snippet Number:      7                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s4z0lftwi     &&  m.conograb VALID
+#REGION 1
+if m.primero = 1
+	m.imporfac = m.imporfac + m.conograb
+	show gets
+else
+	do nito.prg
+endif
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S4Z0LFTX7           m.operexen VALID                   
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVACOMPR,     Record Number:   33  
+*       * Variable:            m.operexen                         
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Field                              
+*       * Snippet Number:      8                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s4z0lftx7     &&  m.operexen VALID
+#REGION 1
+if m.primero = 1
+	m.imporfac = m.imporfac + m.operexen
+	show gets
+else
+	do nito.prg
+endif
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S4Z0LFTXZ           m.ret_ingbru VALID                 
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVACOMPR,     Record Number:   36  
+*       * Variable:            m.ret_ingbru                       
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Field                              
+*       * Snippet Number:      9                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s4z0lftxz     &&  m.ret_ingbru VALID
+#REGION 1
+if m.primero = 1
+	m.imporfac = m.imporfac + m.ret_ingbru
+	show gets
+else
+	do nito.prg
+endif
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S4Z0LFTYI           m.ret_pcta VALID                   
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVACOMPR,     Record Number:   37  
+*       * Variable:            m.ret_pcta                         
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Field                              
+*       * Snippet Number:      10                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s4z0lftyi     &&  m.ret_pcta VALID
+#REGION 1
+if m.primero = 1
+	m.imporfac = m.imporfac + m.ret_pcta
+	show gets
+else
+	do nito.prg
+endif
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S4Z0LFTZ4           m.ACEPTAR VALID                    
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVACOMPR,     Record Number:   38  
+*       * Variable:            m.ACEPTAR                          
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      11                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s4z0lftz4     &&  m.ACEPTAR VALID
+#REGION 1
+IF M.ACEPTAR = 1
+	DO CASE
+	CASE M.INFORME = .T.
+		SET ORDER TO 3
+		IF M.MOSTRAR = 1
+			REPORT FORM IVACOMPR NOCONSOLE FOR IVACOMPR.ABONADO = ABONADOS.CODIGO .AND. MONTH(FECHAingr) = M.MES .AND. YEAR(FECHAingr) = VAL(M.ANIO) PREVIEW
+		ELSE
+			REPORT FORM IVACOMPR NOCONSOLE FOR IVACOMPR.ABONADO = ABONADOS.CODIGO .AND. MONTH(FECHA) = M.MES .AND. YEAR(FECHA) = VAL(M.ANIO) TO PRINTER PROMPT
+		ENDIF
+	CASE M.ACCION = 1
+		IF M.FECHA < CTOD("01/01/80")
+			WAIT WINDOW NOWAIT "ESCRIBA LA FECHA"
+			RETURN
+		ENDIF
+		IF M.NUMERO <> "    "
+			set order to 2	
+			SEEK str(m.tipo + m.primero - 1) + M.CUIT + M.NUMERO
+			IF FOUND()
+				WAIT WINDOW "ERROR. NUMERO DUPLICADO."
+				RETURN
+			ENDIF
+		ELSE
+			WAIT WINDOW NOWAIT "ESCRIBA EL NUMERO"
+			RETURN
+		ENDIF
+		if .not. m.imporfac >0 .and. m.nombre <> "ANULADO"
+			wait window nowait "ESCRIBA EL IMPORTE NETO"
+			RETURN
+		ENDIF
+		if M.cod_prov = 0
+			WAIT WINDOW NOWAIT "SELECCIONE EL PROVEDOR"
+			RETURN
+		ENDIF
+
+		m.abonado = abonados.codigo
+		m.fechaingr = date()
+		m.TIPO = m.tipo - 1 + M.PRIMERO
+		IF M.TIPO = 3 .OR. M.TIPO = 6
+			m.ivageneral = m.ivageneral * (-1)
+			m.impnetgrab = M.impnetgrab * (-1)
+			m.ivanoins = m.ivanoins * (-1)
+			m.imporfac = m.imporfac * (-1)
+			m.conograb = m.conograb * (-1)
+			m.operexen = m.operexen * (-1)
+			m.ret_ingbru = m.ret_ingbru * (-1)
+			m.ret_pcta = m.ret_pcta * (-1)
+		ENDIF
+		do case
+		case m.iva = 1
+			m.impnet27 = m.impnetgrab
+			m.impnetgrab = 0
+			case m.iva = 3
+			m.impnet105 = m.impnetgrab
+			m.impnetgrab = 0
+		endcase	
+		INSERT INTO ivacompr FROM MEMVAR
+		SHOW GETS DISABLE
+		SHOW GET M.ACCION ENABLE
+		SHOW GET M.MOVIMIENTO ENABLE
+		SHOW GET M.ACEPTAR DISABLE
+		SHOW GET M.ORDEN ENABLE
+		SHOW GET M.SALIR ENABLE
+		m.ticket = .f.
+		m.iva27 = .f.
+		m.primero = 1
+		m.elem = 8
+
+	CASE M.ACCION = 3
+		IF M.FECHA < CTOD("01/01/80")
+			WAIT WINDOW NOWAIT "ESCRIBA LA FECHA"
+			RETURN
+		ENDIF
+		IF M.NUMERO <> "    "
+			set order to 2	
+			SEEK str(m.tipo + m.primero - 1) + M.CUIT + M.NUMERO
+			IF FOUND()
+				IF RECNO() <> M.NUMREC
+					WAIT WINDOW "ERROR. NUMERO DUPLICADO."
+					RETURN
+				ENDIF
+			ENDIF
+		ELSE
+			WAIT WINDOW NOWAIT "ESCRIBA EL NUMERO"
+			RETURN
+		ENDIF
+		if .not. m.imporfac >0 .and. m.nombre <> "ANULADO"
+			wait window nowait "ESCRIBA EL IMPORTE NETO"
+			RETURN
+		ENDIF
+		if M.cod_prov = 0
+			WAIT WINDOW NOWAIT "SELECCIONE UN PROVEDOR"
+			RETURN
+		ENDIF
+		select ivacompr
+		GO M.NUMREC
+		m.TIPO = m.tipo - 1 + M.PRIMERO
+		IF M.TIPO = 3 .OR. M.TIPO = 6
+			m.ivageneral = m.ivageneral * (-1)
+			m.impnetgrab = M.impnetgrab * (-1)
+			m.ivanoins = m.ivanoins * (-1)
+			m.imporfac = m.imporfac * (-1)
+			m.conograb = m.conograb * (-1)
+			m.operexen = m.operexen * (-1)
+			m.ret_ingbru = m.ret_ingbru * (-1)
+			m.ret_pcta = m.ret_pcta * (-1)
+		ENDIF
+		do case
+		case m.iva = 1
+			m.impnet27 = m.impnetgrab
+			m.impnetgrab = 0
+		case m.iva = 3
+			m.impnet105 = m.impnetgrab
+			m.impnetgrab = 0
+		endcase	
+		GATHER MEMVAR
+		SHOW GETS DISABLE
+		SHOW GET M.ACCION ENABLE
+		SHOW GET M.MOVIMIENTO ENABLE
+		SHOW GET M.ACEPTAR DISABLE
+		SHOW GET M.ORDEN ENABLE
+		SHOW GET M.SALIR ENABLE
+		m.ticket = .f.
+		m.primero = 1
+		m.elem = 8
+		m.modi = .f.
+		m.iva27 = .f.
+ENDCASE
+ELSE
+	SHOW GETS DISABLE
+	SHOW GET M.ACCION ENABLE
+	SHOW GET M.MOVIMIENTO ENABLE
+	SHOW GET M.ACEPTAR DISABLE
+	SHOW GET M.SALIR ENABLE
+	SHOW GET M.ORDEN ENABLE
+	m.ticket = .f.
+	m.modi = .f.
+	m.iva27 = .f.
+	m.primero = 1
+	m.elem = 8
+ENDIF
+SELECT PROVEDOR
+SET ORDER TO 3
+GO TOP
+SELECT IVACOMPR
+SET RELATION TO COD_PROV INTO PROVEDOR
+set order to ORDEN
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S4Z0LFU3M           m.ACCION VALID                     
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVACOMPR,     Record Number:   39  
+*       * Variable:            m.ACCION                           
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      12                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s4z0lfu3m     &&  m.ACCION VALID
+#REGION 1
+set relation off into provedor
+select provedor
+set order to 1
+select ivacompr
+DO CASE
+CASE M.ACCION = 1
+	M.TICKET =  .F.
+	SCATTER MEMVAR BLANK
+	SHOW GETS ENABLE
+	SHOW GET M.ACCION DISABLE
+	SHOW GET M.MOVIMIENTO DISABLE
+	SHOW GET M.SALIR DISABLE
+	SHOW GET M.ORDEN DISABLE
+	m.iva = 2
+	show get m.impnet27 disable
+	_CUROBJ = 1
+CASE M.ACCION = 2
+	do borraco.spr
+CASE M.ACCION = 3
+	SHOW GETS ENABLE
+	SHOW GET M.ACCION DISABLE
+	SHOW GET M.MOVIMIENTO DISABLE
+	SHOW GET M.SALIR DISABLE
+	SHOW GET M.ORDEN DISABLE
+	SCATTER MEMVAR
+	IF M.TIPO = 3 .OR. M.TIPO = 6
+		m.ivageneral = m.ivageneral * (-1)
+		m.impnetgrab = M.impnetgrab * (-1)
+		m.ivanoins = m.ivanoins * (-1)
+		m.imporfac = m.imporfac * (-1)
+		m.conograb = m.conograb * (-1)
+		m.operexen = m.operexen * (-1)
+		m.impnet27 = m.impnet27 * (-1)
+		m.ret_ingbru = m.ret_ingbru * (-1)
+		m.ret_pcta = m.ret_pcta * (-1)
+	ENDIF
+	if m.iva27 = .f.
+		show get m.impnet27 disable
+	else
+		show get m.impnetgrab disable
+	endif
+	_CUROBJ = 2
+	m.modi = .t.
+	m.prov = Provedor.nombre + transform( Provedor.cod_prov, "    ")
+	M.NUMREC = RECNO()
+	M.ANT_NUM = M.NUMERO
+	M.ANT_NOMB = M.NOMBRE
+	IF NOMBRE = "ANULADO"
+		SHOW GETS DISABLE
+		SHOW GET M.ACEPTAR ENABLE
+		SHOW GET M.FECHA ENABLE
+		SHOW GET M.NUMERO ENABLE
+		show get m.tipo enable
+	else
+		if nombre <> "Consumidor final"
+			select provedor
+			seek m.nombre
+			select ivacompr
+		endif
+	ENDIF
+CASE M.ACCION = 4
+	DO INFORME.SPR	
+ENDCASE
+
+show gets
+
+*       *********************************************************
+*       *                                                         
+*       * _S4Z0LFU5T           m.movimiento VALID                 
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVACOMPR,     Record Number:   40  
+*       * Variable:            m.movimiento                       
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      13                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s4z0lfu5t     &&  m.movimiento VALID
+#REGION 1
+select ivacompr
+do p_mueve.prg
+m.prov = Provedor.nombre + transform( Provedor.cod_prov, "    ")
+select provedor
+scatter memvar
+select ivacompr
+
+if tipo = 8
+	m.ticket = .t.
+else
+	m.ticket = .f.
+endif
+if m.impnetgrab <> 0
+	m.iva = 2
+else
+	if m.impnet27 <> 0
+		m.iva = 1
+		m.impnetgrab = m.impnet27
+	else
+		m.iva = 3
+		m.impnetgrab = m.impnet105	
+	endif
+endif
+
+
+SHOW GETS
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S4Z0LFU6T           M.ORDEN VALID                      
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVACOMPR,     Record Number:   41  
+*       * Variable:            M.ORDEN                            
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Radio Button                       
+*       * Snippet Number:      14                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s4z0lfu6t     &&  M.ORDEN VALID
+#REGION 1
+SET ORDER TO M.ORDEN
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S4Z0LFU86           Nivel de lectura SHOW              
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         IVACOMPR                           
+*       * Called By:           READ Statement                     
+*       * Snippet Number:      15                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s4z0lfu86     && Read Level Show
+PRIVATE currwind
+STORE WOUTPUT() TO currwind
+*
+* Código SHOW de la pantalla: IVACOMPR
+*
+#REGION 1
+IF SYS(2016) = "IVACOMPRAS" OR SYS(2016) = "*"
+	ACTIVATE WINDOW ivacompras SAME
+	@ 5.615,41.200 CLEAR TO 6.615,84.533
+	@ 5.615,41.200 SAY M.nombre ;
+		SIZE 1.000,43.333, 0.000 ;
+		FONT "MS Sans Serif", 8 ;
+		STYLE "BT"
+	@ 7.462,41.200 CLEAR TO 8.462,58.533
+	@ 7.462,41.200 SAY M.cuit ;
+		SIZE 1.000,17.333, 0.000 ;
+		FONT "MS Sans Serif", 8 ;
+		STYLE "BT"
+	@ 7.462,74.800 CLEAR TO 8.462,84.133
+	@ 7.462,74.800 SAY M.ef ;
+		SIZE 1.000,9.333, 0.000 ;
+		FONT "MS Sans Serif", 8 ;
+		STYLE "BT"
+	@ 13.000,96.000 SAY m.ivageneral ;
+		SIZE 1.000,11.200, 0.000 ;
+		FONT "MS Sans Serif", 8 ;
+		PICTURE "999999.99"
+	@ 14.846,96.000 SAY m.ivanoins ;
+		SIZE 1.000,11.200, 0.000 ;
+		FONT "MS Sans Serif", 8 ;
+		PICTURE "999999.99"
+	@ 0.077,65.200 SAY Abonados.ef ;
+		SIZE 1.000,6.167, 0.000 ;
+		FONT "SansSerif", 10 ;
+		STYLE "B" ;
+		COLOR RGB(0,0,0,192,192,192)
+ENDIF
+IF NOT EMPTY(currwind)
+	ACTIVATE WINDOW (currwind) SAME
+ENDIF

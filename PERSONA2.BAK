@@ -1,0 +1,297 @@
+*       *********************************************************
+*       *                                                         
+*       * 08-12-97            PERSONA2.SPR               11:44:00 
+*       *                                                         
+*       *********************************************************
+*       *                                                         
+*       * Nombre del autor                                        
+*       *                                                         
+*       * Copyright (c) 1997 Nombre de la empresa                 
+*       * Dirección                                               
+*       * Ciudad,     C.P.                                        
+*       * País                                              
+*       *                                                         
+*       * Description:                                            
+*       * Este programa lo ha generado automáticamente GENSCRN.    
+*       *                                                         
+*       *********************************************************
+
+
+#REGION 0
+REGIONAL m.currarea, m.talkstat, m.compstat
+
+IF SET("TALK") = "ON"
+	SET TALK OFF
+	m.talkstat = "ON"
+ELSE
+	m.talkstat = "OFF"
+ENDIF
+m.compstat = SET("COMPATIBLE")
+SET COMPATIBLE FOXPLUS
+
+m.rborder = SET("READBORDER")
+SET READBORDER ON
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Definiciones de ventana             
+*       *                                                         
+*       *********************************************************
+*
+
+IF NOT WEXIST("_rqd0p5dti")
+	DEFINE WINDOW _rqd0p5dti ;
+		AT 0.000, 0.000 ;
+		SIZE 22.231,93.000 ;
+		FONT "MS Sans Serif", 8 ;
+		FLOAT ;
+		NOCLOSE ;
+		MINIMIZE ;
+		SYSTEM ;
+		COLOR RGB(,,,0,128,128)
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *  PERSONA2/Windows Código de configuración - SECCION 2   
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+select 1
+DECLARE arr_ef(3)
+arr_ef[1]= "R.I."
+arr_ef[2]= "R.N.I."
+arr_ef[3]= "EXEN."
+
+
+*       *********************************************************
+*       *                                                         
+*       *        PERSONA2/Windows Distribución de pantalla        
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+IF WVISIBLE("_rqd0p5dti")
+	ACTIVATE WINDOW _rqd0p5dti SAME
+ELSE
+	ACTIVATE WINDOW _rqd0p5dti NOSHOW
+ENDIF
+@ 18.462,12.000 GET m.movimiento ;
+	PICTURE "@*BHN " + ;
+		(LOCFILE("wizards\wizbmps\wztop.bmp","BMP|ICO|PCT|ICN","¿Dónde está wztop?")) + ";" + ;
+		(LOCFILE("wizards\wizbmps\wzback.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzback?")) + ";" + ;
+		(LOCFILE("wizards\wizbmps\wzlocate.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzlocate?")) + ";" + ;
+		(LOCFILE("wizards\wizbmps\wznext.bmp","BMP|ICO|PCT|ICN","¿Dónde está wznext?")) + ";" + ;
+		(LOCFILE("wizards\wizbmps\wzend.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzend?")) ;
+	SIZE 2.000,9.400,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	VALID _rqd0p5dxi()
+@ 0.385,37.200 SAY "Abonados" ;
+	PICTURE "@I" ;
+	FONT "GeoSlab703 MdCn BT", 24 ;
+	STYLE "BT" ;
+	COLOR RGB(0,0,0,,,,)
+@ 5.615,31.600 GET m.nombre ;
+	SIZE 1.000,32.800 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "@K!" ;
+	DISABLE
+@ 8.385,31.600 GET m.cuit ;
+	SIZE 1.000,17.200 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "@K 99-99999999-9" ;
+	DISABLE
+@ 2.769,74.400 GET m.ACCION ;
+	PICTURE "@*BVN " + ;
+		(LOCFILE("wizards\wizbmps\wznew.bmp","BMP|ICO|PCT|ICN","¿Dónde está wznew?")) + ";" + ;
+		(LOCFILE("wizards\wizbmps\wzdelete.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzdelete?")) + ";" + ;
+		(LOCFILE("wizards\wizbmps\wzedit.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzedit?")) ;
+	SIZE 2.077,14.800,0.308 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	VALID _rqd0p5e07() ;
+	MESSAGE 'Agrega un nuevo registro.'
+@ 11.077,74.400 GET m.ACEPTAR ;
+	PICTURE "@*VN ACEPTAR;CANCELAR" ;
+	SIZE 2.077,12.000,0.308 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _rqd0p5e1q() ;
+	DISABLE ;
+	MESSAGE 'Guarda los cambios realizados.'
+@ 16.615,74.400 GET m.salir ;
+	PICTURE "@*BHT " + ;
+		(LOCFILE("wizards\wizbmps\wzclose.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzclose?")) ;
+	SIZE 3.769,14.600,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	MESSAGE 'Cierra la pantalla.'
+@ 5.615,9.200 SAY "apellido y nombre" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 8.385,9.200 SAY "CUIT" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 11.154,9.200 SAY "estado fiscal" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 11.077,31.200 GET M.EF ;
+	PICTURE "@^" ;
+	FROM ARR_EF ;
+	SIZE 1.538,12.167 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	DISABLE
+
+IF NOT WVISIBLE("_rqd0p5dti")
+	ACTIVATE WINDOW _rqd0p5dti
+ENDIF
+
+READ CYCLE
+
+RELEASE WINDOW _rqd0p5dti
+
+#REGION 0
+
+SET READBORDER &rborder
+
+IF m.talkstat = "ON"
+	SET TALK ON
+ENDIF
+IF m.compstat = "ON"
+	SET COMPATIBLE ON
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       * _RQD0P5DXI           m.movimiento VALID                 
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PERSONA2,     Record Number:    2  
+*       * Variable:            m.movimiento                       
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      1                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _rqd0p5dxi     &&  m.movimiento VALID
+#REGION 1
+DO CASE
+CASE M.MOVIMIENTO = 1
+	GO TOP
+	WAIT WINDOW "PRINCIPIO DEL ARCHIVO" NOWAIT
+CASE M.MOVIMIENTO = 4
+	SKIP
+	IF EOF()
+		WAIT WINDOW "FIN DE ARCHIVO" NOWAIT
+		GO TOP
+	ENDIF
+CASE M.MOVIMIENTO = 3
+
+CASE M.MOVIMIENTO = 2
+	SKIP - 1
+	IF BOF()
+		WAIT WINDOW "PRINCIPIO DE ARCHIVO" NOWAIT
+		GO BOTTOM
+	ENDIF
+CASE M.MOVIMIENTO = 5
+	GO BOTTOM
+	WAIT WINDOW "FIN DEL ARCHIVO " NOWAIT
+ENDCASE
+SCATTER MEMVAR
+SHOW GETS
+
+
+*       *********************************************************
+*       *                                                         
+*       * _RQD0P5E07           m.ACCION VALID                     
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PERSONA2,     Record Number:    6  
+*       * Variable:            m.ACCION                           
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      2                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _rqd0p5e07     &&  m.ACCION VALID
+#REGION 1
+DO CASE
+CASE M.ACCION = 1
+	SCATTER MEMVAR BLANK
+	SHOW GETS ENABLE
+	SHOW GET M.ACCION DISABLE
+	SHOW GET M.MOVIMIENTO DISABLE
+	SHOW GET M.SALIR DISABLE
+CASE M.ACCION = 2
+	SHOW GET M.ACCION DISABLE
+	SHOW GET M.MOVIMIENTO DISABLE
+	SHOW GET M.SALIR DISABLE
+	WAIT WINDOW "PARA BORRAR PULSE EL BOTON ACEPTAR"
+CASE M.ACCION = 3
+	SHOW GETS ENABLE
+	SHOW GET M.ACCION DISABLE
+	SHOW GET M.MOVIMIENTO DISABLE
+	SHOW GET M.SALIR DISABLE
+	SCATTER MEMVAR
+ENDCASE
+
+*       *********************************************************
+*       *                                                         
+*       * _RQD0P5E1Q           m.ACEPTAR VALID                    
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PERSONA2,     Record Number:    7  
+*       * Variable:            m.ACEPTAR                          
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      3                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _rqd0p5e1q     &&  m.ACEPTAR VALID
+#REGION 1
+IF M.ACEPTAR = 1
+	DO CASE
+	CASE M.ACCION = 1
+			if reccount() = 0
+				m.codigo = chr(40)
+			else
+				go bottom
+				m.codigo= chr(asc(codigo)+ 1)
+			endif
+			M.EF =  ARR_EF[M.EFn]
+			INSERT INTO abonados FROM MEMVAR
+	CASE M.ACCION = 2
+		DELETE
+		SKIP
+		SCATTER MEMVAR
+		SHOW GETS
+	CASE M.ACCION = 3
+		GATHER MEMVAR
+	ENDCASE
+ENDIF
+SHOW GETS DISABLE
+SHOW GET M.ACCION ENABLE
+SHOW GET M.MOVIMIENTO ENABLE
+SHOW GET M.ACEPTAR DISABLE
+SHOW GET M.SALIR ENABLE
+

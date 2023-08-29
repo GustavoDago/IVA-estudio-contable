@@ -1,0 +1,6 @@
+SELECT Ivacompr.fecha, Ivacompr.tipo, Ivacompr.numero, Provedor.nombre,;
+  Ivacompr.marca;
+ FROM Ivacompr, Provedor;
+ WHERE Provedor.cod_prov = Ivacompr.cod_prov;
+ ORDER BY Ivacompr.fecha;
+ INTO TABLE informe.dbf

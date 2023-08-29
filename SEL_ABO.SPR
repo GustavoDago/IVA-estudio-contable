@@ -1,0 +1,119 @@
+*       *********************************************************
+*       *                                                         
+*       * 11/12/1998            SEL_ABO.SPR              17:27:14 
+*       *                                                         
+*       *********************************************************
+*       *                                                         
+*       * Nombre del autor                                        
+*       *                                                         
+*       * Copyright (c) 1998 Nombre de la empresa                 
+*       * Dirección                                               
+*       * Ciudad,     C.P.                                        
+*       * País                                              
+*       *                                                         
+*       * Description:                                            
+*       * Este programa lo ha generado automáticamente GENSCRN.    
+*       *                                                         
+*       *********************************************************
+
+
+#REGION 0
+REGIONAL m.currarea, m.talkstat, m.compstat
+
+IF SET("TALK") = "ON"
+	SET TALK OFF
+	m.talkstat = "ON"
+ELSE
+	m.talkstat = "OFF"
+ENDIF
+m.compstat = SET("COMPATIBLE")
+SET COMPATIBLE FOXPLUS
+
+m.rborder = SET("READBORDER")
+SET READBORDER ON
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Definiciones de ventana             
+*       *                                                         
+*       *********************************************************
+*
+
+IF NOT WEXIST("_s0n11erit")
+	DEFINE WINDOW _s0n11erit ;
+		AT  0.000, 0.000  ;
+		SIZE 20.154,42.333 ;
+		FONT "MicrogrammaDMedExt", 8 ;
+		FLOAT ;
+		CLOSE ;
+		NOMINIMIZE ;
+		DOUBLE
+	MOVE WINDOW _s0n11erit CENTER
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *   SEL_ABO/Windows Código de configuración - SECCION 2   
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+SELECT ABONADOS
+SET ORDER TO 1
+
+#REGION 1
+DEFINE POPUP _s0n11erka ;
+	PROMPT FIELD Abonados.nombre ;
+	SCROLL
+
+*       *********************************************************
+*       *                                                         
+*       *        SEL_ABO/Windows Distribución de pantalla         
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+IF WVISIBLE("_s0n11erit")
+	ACTIVATE WINDOW _s0n11erit SAME
+ELSE
+	ACTIVATE WINDOW _s0n11erit NOSHOW
+ENDIF
+@ 1.000,3.667 SAY "SELECCIONE ABONADO" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 2.923,2.167 GET M.ABONADO ;
+ 	PICTURE "@&N" ;
+	POPUP _s0n11erka ;
+	SIZE 13.846,40.400 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE ""
+@ 17.538,4.000 GET M.OPCOMPRA ;
+	PICTURE "@*HT SELECCIONAR;CANCELAR" ;
+	SIZE 1.769,15.500,0.667 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B"
+
+IF NOT WVISIBLE("_s0n11erit")
+	ACTIVATE WINDOW _s0n11erit
+ENDIF
+
+READ CYCLE MODAL
+
+RELEASE WINDOW _s0n11erit
+RELEASE POPUPS _s0n11erka
+
+#REGION 0
+
+SET READBORDER &rborder
+
+IF m.talkstat = "ON"
+	SET TALK ON
+ENDIF
+IF m.compstat = "ON"
+	SET COMPATIBLE ON
+ENDIF

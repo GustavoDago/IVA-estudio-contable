@@ -1,0 +1,303 @@
+*       *********************************************************
+*       *                                                         
+*       * 25/02/1999           PRINCIPA.SPR              19:06:02 
+*       *                                                         
+*       *********************************************************
+*       *                                                         
+*       * Nombre del autor                                        
+*       *                                                         
+*       * Copyright (c) 1999 Nombre de la empresa                 
+*       * Dirección                                               
+*       * Ciudad,     C.P.                                        
+*       * País                                              
+*       *                                                         
+*       * Description:                                            
+*       * Este programa lo ha generado automáticamente GENSCRN.    
+*       *                                                         
+*       *********************************************************
+
+
+#REGION 0
+REGIONAL m.currarea, m.talkstat, m.compstat
+
+IF SET("TALK") = "ON"
+	SET TALK OFF
+	m.talkstat = "ON"
+ELSE
+	m.talkstat = "OFF"
+ENDIF
+m.compstat = SET("COMPATIBLE")
+SET COMPATIBLE FOXPLUS
+
+m.rborder = SET("READBORDER")
+SET READBORDER ON
+
+m.currarea = SELECT()
+
+
+*       *********************************************************
+*       *                                                         
+*       *  PRINCIPA/Windows Bases de datos, índices, relaciones   
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("abonados")
+	SELECT abonados
+	SET ORDER TO TAG "nombre"
+ELSE
+	SELECT 0
+	USE (LOCFILE("abonados.dbf","DBF","Buscar  abonados?"));
+		AGAIN ALIAS abonados ;
+		ORDER TAG "nombre"
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Definiciones de ventana             
+*       *                                                         
+*       *********************************************************
+*
+
+MODIFY WINDOW SCREEN ;
+	AT 0.000, 0.000 ;
+	SIZE 19.474,80.000 ;
+	TITLE "ESTUDIO CONTABLE E IMPOSITIVO" ;
+	FONT "Souvenir Lt BT", 12 ;
+	FLOAT ;
+	NOCLOSE ;
+	MINIMIZE ;
+	FILL FILE LOCFILE("ESTUDIO.BMP","BMP|ICO|PCT|ICN", ;
+		"¿Dónde está estudio?")
+CLEAR
+
+*       *********************************************************
+*       *                                                         
+*       *  PRINCIPA/Windows Código de configuración - SECCION 2   
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+set sysmenu off
+set status bar off
+SET DATE FRENCH
+SET CENTURY ON
+SET MARK TO '/'
+SET DELETED ON
+
+select abonados
+go top
+m.abon = Abonados.nombre + transform( Abonados.codigo, "  ")
+
+#REGION 1
+DEFINE POPUP _s2t14xtp1 ;
+	PROMPT FIELD Abonados.nombre + transform( Abonados.codigo, "  ") ;
+	SCROLL
+
+*       *********************************************************
+*       *                                                         
+*       *        PRINCIPA/Windows Distribución de pantalla        
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+@ 6.316,27.429 GET M.MENUIVA ;
+	PICTURE "@*VN IVA COMPRAS;IVA VENTAS" ;
+	SIZE 2.462,28.000,1.538 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s2t14xtpv()
+@ 4.421,64.857 GET M.BASES ;
+	PICTURE "@*VN ABONADOS;PROVEEDORES;CLIENTES" ;
+	SIZE 4.077,16.667,0.308 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s2t14xtql()
+@ 15.158,3.429 GET M.RELACIONA ;
+	PICTURE "@*VN ABONADO CON CLIENTE;ABONADO CON PROVEEDOR" ;
+	SIZE 1.923,30.667,0.308 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s2t14xtra()
+@ 13.947,3.429 SAY "RELACIONAR" ;
+	FONT "MS Sans Serif", 8 ;
+	COLOR RGB(255,255,255,0,0,0)
+@ 3.211,65.143 SAY "MANEJO DE" ;
+	FONT "MS Sans Serif", 8 ;
+	COLOR RGB(255,255,255,0,0,0)
+@ 15.158,65.143 GET m.salir ;
+	PICTURE "@*BHT " + ;
+		(LOCFILE("..\wizards\wizbmps\wzclose.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzclose?")) ;
+	SIZE 2.579,13.714,0.571 ;
+	DEFAULT 1 ;
+	FONT "Souvenir Lt BT", 12
+@ 1.263,8.571 SAY "SISTEMA IVA" ;
+	FONT "Souvenir Lt BT", 36 ;
+	STYLE "BIT" ;
+	COLOR RGB(255,255,255,,,,)
+@ 6.316,1.857 GET m.abon ;
+ 	PICTURE "@&N" ;
+	POPUP _s2t14xtp1 ;
+	SIZE 6.750,33.400 ;
+	DEFAULT " " ;
+	FONT "Times New Roman", 10 ;
+	STYLE ""
+@ 15.158,34.286 GET M.COPIAS ;
+	PICTURE "@*VN COPIA DE SEGURIDAD;RESTAURACION" ;
+	SIZE 1.923,30.667,0.308 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s2t14xtsv()
+@ 13.947,34.286 SAY "MANTENIMIENTO" ;
+	FONT "MS Sans Serif", 8 ;
+	COLOR RGB(255,255,255,0,0,0)
+
+
+
+READ CYCLE
+
+MODIFY WINDOW SCREEN
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Cerrando bases de datos             
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("abonados")
+	SELECT abonados
+	USE
+ENDIF
+
+SELECT (m.currarea)
+
+RELEASE POPUPS _s2t14xtp1
+
+#REGION 0
+
+SET READBORDER &rborder
+
+IF m.talkstat = "ON"
+	SET TALK ON
+ENDIF
+IF m.compstat = "ON"
+	SET COMPATIBLE ON
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *           PRINCIPA/Windows Código de limpieza           
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+SET SYSMENU TO DEFAULT
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XTPV           M.MENUIVA VALID                    
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PRINCIPA,     Record Number:    3  
+*       * Variable:            M.MENUIVA                          
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      1                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xtpv     &&  M.MENUIVA VALID
+#REGION 1
+DO CASE
+CASE M.MENUIVA = 1
+	DO IVACOMPR.spr
+CASE M.MENUIVA = 2
+	DO IVAVENTA.spr
+ENDCASE
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XTQL           M.BASES VALID                      
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PRINCIPA,     Record Number:    4  
+*       * Variable:            M.BASES                            
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      2                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xtql     &&  M.BASES VALID
+#REGION 1
+DO CASE
+CASE M.BASES = 1
+	DO PERSONA2.SPR
+CASE M.BASES = 2
+	DO PROVEDO.SPR
+CASE M.BASES = 3
+	DO CLIENTES.SPR
+ENDCASE
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XTRA           M.RELACIONA VALID                  
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PRINCIPA,     Record Number:    5  
+*       * Variable:            M.RELACIONA                        
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      3                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xtra     &&  M.RELACIONA VALID
+#REGION 1
+DO CASE
+CASE M.RELACIONA = 1
+	DO RELACLI.SPR
+CASE M.RELACIONA = 2
+	DO RELAPRO.SPR
+ENDCASE
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XTSV           M.COPIAS VALID                     
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         PRINCIPA,     Record Number:   11  
+*       * Variable:            M.COPIAS                           
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      4                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xtsv     &&  M.COPIAS VALID
+#REGION 1
+DO CASE
+CASE M.COPIAS = 1
+	DO COPIA.SPR
+CASE M.COPIAS = 2
+	do pedido.spr
+ENDCASE

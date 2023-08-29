@@ -1,0 +1,781 @@
+*       *********************************************************
+*       *                                                         
+*       * 02/03/99            RESTAURA.SPR               11:06:24 
+*       *                                                         
+*       *********************************************************
+*       *                                                         
+*       * Nombre del autor                                        
+*       *                                                         
+*       * Copyright (c) 1999 Nombre de la empresa                 
+*       * Dirección                                               
+*       * Ciudad,     C.P.                                        
+*       * País                                              
+*       *                                                         
+*       * Description:                                            
+*       * Este programa lo ha generado automáticamente GENSCRN.    
+*       *                                                         
+*       *********************************************************
+
+
+#REGION 0
+REGIONAL m.currarea, m.talkstat, m.compstat
+
+IF SET("TALK") = "ON"
+	SET TALK OFF
+	m.talkstat = "ON"
+ELSE
+	m.talkstat = "OFF"
+ENDIF
+m.compstat = SET("COMPATIBLE")
+SET COMPATIBLE FOXPLUS
+
+m.rborder = SET("READBORDER")
+SET READBORDER ON
+
+m.currarea = SELECT()
+
+
+*       *********************************************************
+*       *                                                         
+*       *  RESTAURA/Windows Bases de datos, índices, relaciones   
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("bases")
+	SELECT bases
+	SET ORDER TO 0
+ELSE
+	SELECT 0
+	USE (LOCFILE("bases.dbf","DBF","Buscar  bases?"));
+		AGAIN ALIAS bases ;
+		ORDER 0
+ENDIF
+
+IF USED("cliente")
+	SELECT cliente
+	SET ORDER TO 0
+ELSE
+	SELECT 0
+	USE (LOCFILE("cliente.dbf","DBF","Buscar  cliente?"));
+		AGAIN ALIAS cliente ;
+		ORDER 0
+ENDIF
+
+IF USED("ivaventa")
+	SELECT ivaventa
+	SET ORDER TO 0
+ELSE
+	SELECT 0
+	USE (LOCFILE("ivaventa.dbf","DBF","Buscar  ivaventa?"));
+		AGAIN ALIAS ivaventa ;
+		ORDER 0
+ENDIF
+
+IF USED("ivacompr")
+	SELECT ivacompr
+	SET ORDER TO 0
+ELSE
+	SELECT 0
+	USE (LOCFILE("ivacompr.dbf","DBF","Buscar  ivacompr?"));
+		AGAIN ALIAS ivacompr ;
+		ORDER 0
+ENDIF
+
+IF USED("provedor")
+	SELECT provedor
+	SET ORDER TO 0
+ELSE
+	SELECT 0
+	USE (LOCFILE("provedor.dbf","DBF","Buscar  provedor?"));
+		AGAIN ALIAS provedor ;
+		ORDER 0
+ENDIF
+
+SELECT bases
+
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Definiciones de ventana             
+*       *                                                         
+*       *********************************************************
+*
+
+IF NOT WEXIST("restaura") ;
+	OR UPPER(WTITLE("RESTAURA")) == "RESTAURA.PJX" ;
+	OR UPPER(WTITLE("RESTAURA")) == "RESTAURA.SCX" ;
+	OR UPPER(WTITLE("RESTAURA")) == "RESTAURA.MNX" ;
+	OR UPPER(WTITLE("RESTAURA")) == "RESTAURA.PRG" ;
+	OR UPPER(WTITLE("RESTAURA")) == "RESTAURA.FRX" ;
+	OR UPPER(WTITLE("RESTAURA")) == "RESTAURA.QPR"
+	DEFINE WINDOW restaura ;
+		AT  0.000, 0.000  ;
+		SIZE 16.846,96.800 ;
+		TITLE "RESTAURACION" ;
+		FONT "MS Sans Serif", 8 ;
+		FLOAT ;
+		NOCLOSE ;
+		MINIMIZE ;
+		SYSTEM
+	MOVE WINDOW restaura CENTER
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *  RESTAURA/Windows Código de configuración - SECCION 2   
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+m.abos = Abonados.nombre + transform( Abonados.codigo, "  ")
+m.len = 0
+dimension MESES(1)
+store .f. to m.ene, m.feb, m.mar, m.abr, m.may, m.jun, m.jul, m.ago, m.set, m.oct, m.nov, m.dic, m.todos
+scan
+	if FILE((base))
+		m.len = m.len + 1
+		DIMENSION adospuntos(m.len, 2)
+		adospuntos[m.len,1] = (texto)
+		adospuntos[m.len,2] = (base)
+	ENDIF
+endscan
+
+
+#REGION 1
+DEFINE POPUP _s2y0nt0kq ;
+	PROMPT FIELD Abonados.nombre + transform( Abonados.codigo, "  ") ;
+	SCROLL
+
+*       *********************************************************
+*       *                                                         
+*       *        RESTAURA/Windows Distribución de pantalla        
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+IF WVISIBLE("restaura")
+	ACTIVATE WINDOW restaura SAME
+ELSE
+	ACTIVATE WINDOW restaura NOSHOW
+ENDIF
+@ 13.462,79.000 GET m.salir ;
+	PICTURE "@*BHT " + ;
+		(LOCFILE("..\wizards\wizbmps\wzclose.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzclose?")) ;
+	SIZE 3.231,17.200,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8
+@ 0.000,0.000 GET m.dbf ;
+	PICTURE "@^" ;
+	FROM adospuntos ;
+	SIZE 1.538,22.167 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	WHEN _s2y0nt0lm()
+@ 0.077,55.200 GET m.todos ;
+	PICTURE "@*C Todos" ;
+	SIZE 1.308,10.333 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0nt0mr() ;
+	DISABLE
+@ 1.846,55.200 GET m.algunos ;
+	PICTURE "@*HN Seleccionar..." ;
+	SIZE 1.769,15.333,0.667 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s2y0nt0nd() ;
+	DISABLE
+@ 5.538,38.400 GET m.ene ;
+	PICTURE "@*C enero" ;
+	SIZE 1.308,9.833 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0nt0o3()
+@ 7.385,38.400 GET m.feb ;
+	PICTURE "@*C febrero" ;
+	SIZE 1.308,11.167 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0nt0or()
+@ 9.231,38.400 GET m.mar ;
+	PICTURE "@*C marzo" ;
+	SIZE 1.308,10.000 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0nt0pe()
+@ 11.154,38.400 GET m.abr ;
+	PICTURE "@*C abril" ;
+	SIZE 1.308,8.500 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0nt0pz()
+@ 13.000,38.400 GET m.may ;
+	PICTURE "@*C mayo" ;
+	SIZE 1.308,9.333 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0nt0qj()
+@ 14.846,38.400 GET m.jun ;
+	PICTURE "@*C junio" ;
+	SIZE 1.308,9.000 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0nt0r7()
+@ 5.615,57.600 GET m.jul ;
+	PICTURE "@*C julio" ;
+	SIZE 1.308,8.333 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0nt0rt()
+@ 7.462,57.600 GET m.ago ;
+	PICTURE "@*C agosto" ;
+	SIZE 1.308,10.833 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0nt0sg()
+@ 9.308,57.600 GET m.set ;
+	PICTURE "@*C setiembre" ;
+	SIZE 1.308,13.500 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0nt0t5()
+@ 11.077,57.600 GET m.oct ;
+	PICTURE "@*C octubre" ;
+	SIZE 1.308,11.667 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0nt0ts()
+@ 12.923,57.600 GET m.nov ;
+	PICTURE "@*C noviembre" ;
+	SIZE 1.308,14.167 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0nt0ui()
+@ 14.769,57.600 GET m.dic ;
+	PICTURE "@*C diciembre" ;
+	SIZE 1.308,13.500 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0nt0v5()
+@ 7.308,2.600 GET m.abos ;
+ 	PICTURE "@&N" ;
+	POPUP _s2y0nt0kq ;
+	SIZE 9.231,33.400 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "" ;
+	DISABLE
+@ 10.154,79.000 GET M.INICIAR ;
+	PICTURE "@*HN ¡¡¡ INICIAR !!!" ;
+	SIZE 1.769,14.333,0.667 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s2y0nt0vv()
+@ 4.615,0.000 TO 16.615,74.600 ;
+	PEN 1, 8 ;
+	COLOR RGB(0,128,128,,,,)
+@ 0.000,28.800 TO 4.692,74.600 ;
+	PEN 1, 8 ;
+	STYLE "T"
+@ 0.077,30.800 SAY "Clientes" + CHR(13) + ;
+		"Proveedores" + CHR(13) + ;
+		"Abonados" ;
+	SIZE 3.000,12.600, 0.000 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 4.692,2.400 SAY "Iva Compras" + CHR(13) + ;
+		"Iva Ventas" ;
+	SIZE 2.000,11.800, 0.000 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 0.923,74.600 SAY (LOCFILE("adonav.bmp","BMP|ICO|PCT|ICN", "¿Dónde está adonav?" )) BITMAP ;
+	SIZE 8.308,21.400 ;
+	STYLE "T"
+
+IF NOT WVISIBLE("restaura")
+	ACTIVATE WINDOW restaura
+ENDIF
+
+READ CYCLE MODAL
+
+RELEASE WINDOW restaura
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Cerrando bases de datos             
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("bases")
+	SELECT bases
+	USE
+ENDIF
+
+IF USED("cliente")
+	SELECT cliente
+	USE
+ENDIF
+
+IF USED("ivaventa")
+	SELECT ivaventa
+	USE
+ENDIF
+
+IF USED("ivacompr")
+	SELECT ivacompr
+	USE
+ENDIF
+
+IF USED("provedor")
+	SELECT provedor
+	USE
+ENDIF
+
+SELECT (m.currarea)
+
+RELEASE POPUPS _s2y0nt0kq
+
+#REGION 0
+
+SET READBORDER &rborder
+
+IF m.talkstat = "ON"
+	SET TALK ON
+ENDIF
+IF m.compstat = "ON"
+	SET COMPATIBLE ON
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0LM           m.dbf WHEN                         
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:    8  
+*       * Variable:            m.dbf                              
+*       * Called By:           WHEN Clause                        
+*       * Object Type:         Popup                              
+*       * Snippet Number:      1                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0lm     &&  m.dbf WHEN
+#REGION 1
+if adospuntos[m.dbf,1] =  "Abonados  " .or. adospuntos[m.dbf,1] = "Clientes  " .or. adospuntos[m.dbf,1] = "Proveedor "
+	show gets disable
+	show get m.todos enable
+	show get m.algunos enable
+	show get m.dbf enable
+else
+	show gets enable
+	show get m.todos disable
+	show get m.algunos disable	
+endif
+show get m.iniciar enable
+show get m.salir enable
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0MR           m.todos VALID                      
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:    9  
+*       * Variable:            m.todos                            
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      2                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0mr     &&  m.todos VALID
+#REGION 1
+if m.todos = .t.
+	show get m.algunos disable
+else
+	show get m.algunos enable
+endif
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0ND           m.algunos VALID                    
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:   10  
+*       * Variable:            m.algunos                          
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      3                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0nd     &&  m.algunos VALID
+#REGION 1
+set deleted off
+SELECT 0
+use adospuntos[m.dbf,2]
+BROWSE NOAPPEND NOMODIFY TITLE "MARQUE EN LA IZQUIERDA PARA SELECCIONAR"
+USE
+SET DELETED ON
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0O3           m.ene VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:   11  
+*       * Variable:            m.ene                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      4                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0o3     &&  m.ene VALID
+#REGION 1
+if m.ene = .t.
+	DIMENSION MESES(alen(meses) + 1)
+	MESES[ALEN(MESES)] = 1
+else		
+	DIMENSION MESES(ALEN(MESES) - ADEL(MESES,ASCAN(MESES,1)))
+endif
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0OR           m.feb VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:   12  
+*       * Variable:            m.feb                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      5                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0or     &&  m.feb VALID
+#REGION 1
+if m.FEB = .t.
+	DIMENSION MESES(ALEN(MESES) + 1)
+	MESES[ALEN(MESES)] = 2
+else
+	DIMENSION MESES(ALEN(MESES) - ADEL(MESES,ASCAN(MESES,2)))
+endif
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0PE           m.mar VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:   13  
+*       * Variable:            m.mar                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      6                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0pe     &&  m.mar VALID
+#REGION 1
+if m.mar = .t.
+	DIMENSION MESES(ALEN(MESES) + 1)
+	MESES[ALEN(MESES)] = 3
+else
+	DIMENSION MESES(ALEN(MESES) - ADEL(MESES,ASCAN(MESES,3)))
+endif
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0PZ           m.abr VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:   14  
+*       * Variable:            m.abr                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      7                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0pz     &&  m.abr VALID
+#REGION 1
+if m.ABR = .t.
+	DIMENSION MESES(ALEN(MESES) + 1)
+	MESES[ALEN(MESES)] = 4
+else
+	DIMENSION MESES(ALEN(MESES) - ADEL(MESES,ASCAN(MESES,4)))
+endif
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0QJ           m.may VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:   15  
+*       * Variable:            m.may                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      8                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0qj     &&  m.may VALID
+#REGION 1
+if m.may = .t.
+	DIMENSION MESES(ALEN(MESES) + 1)
+	MESES[ALEN(MESES)] = 5
+else
+	
+	DIMENSION MESES(ALEN(MESES) - ADEL(MESES,ASCAN(MESES,5)))
+endif
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0R7           m.jun VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:   16  
+*       * Variable:            m.jun                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      9                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0r7     &&  m.jun VALID
+#REGION 1
+if m.jun = .t.
+	DIMENSION MESES(ALEN(MESES) + 1)
+	MESES[ALEN(MESES)] = 6
+else
+	DIMENSION MESES(ALEN(MESES) - ADEL(MESES,ASCAN(MESES,6)))
+endif
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0RT           m.jul VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:   17  
+*       * Variable:            m.jul                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      10                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0rt     &&  m.jul VALID
+#REGION 1
+if m.jul = .t.
+	DIMENSION MESES(ALEN(MESES) + 1)
+	MESES[ALEN(MESES)] = 7
+else
+	DIMENSION MESES(ALEN(MESES) - ADEL(MESES,ASCAN(MESES,7)))
+endif
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0SG           m.ago VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:   18  
+*       * Variable:            m.ago                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      11                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0sg     &&  m.ago VALID
+#REGION 1
+if m.ago = .t.
+	DIMENSION MESES(ALEN(MESES) + 1)
+	MESES[ALEN(MESES)] = 8
+else
+	
+	DIMENSION MESES(ALEN(MESES) - ADEL(MESES,ASCAN(MESES,8)))
+endif
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0T5           m.set VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:   19  
+*       * Variable:            m.set                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      12                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0t5     &&  m.set VALID
+#REGION 1
+if m.set = .t.
+	DIMENSION MESES(ALEN(MESES) + 1)
+	MESES[ALEN(MESES)] = 9
+else
+	DIMENSION MESES(ALEN(MESES) - ADEL(MESES,ASCAN(MESES,9)))
+endif
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0TS           m.oct VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:   20  
+*       * Variable:            m.oct                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      13                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0ts     &&  m.oct VALID
+#REGION 1
+if m.oct = .t.
+	DIMENSION MESES(ALEN(MESES) + 1)
+	MESES[ALEN(MESES)] = 10
+else
+	
+	DIMENSION MESES(ALEN(MESES) - ADEL(MESES,ASCAN(MESES,10))))
+endif
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0UI           m.nov VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:   21  
+*       * Variable:            m.nov                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      14                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0ui     &&  m.nov VALID
+#REGION 1
+if m.nov = .t.
+	DIMENSION MESES(ALEN(MESES) + 1)
+	MESES[ALEN(MESES)] = 11
+else
+	DIMENSION MESES(ALEN(MESES) - ADEL(MESES,ASCAN(MESES,11)))
+endif
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0V5           m.dic VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:   22  
+*       * Variable:            m.dic                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      15                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0v5     &&  m.dic VALID
+#REGION 1
+if m.dic = .t.
+	DIMENSION MESES(ALEN(MESES) + 1)
+	MESES[ALEN(MESES)] = 12
+else
+	DIMENSION MESES(ALEN(MESES) - ADEL(MESES,ASCAN(MESES,12)))
+endif
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT0VV           M.INICIAR VALID                    
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RESTAURA,     Record Number:   24  
+*       * Variable:            M.INICIAR                          
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      16                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt0vv     &&  M.INICIAR VALID
+#REGION 1
+show get m.iniciar disable
+base_c = substr(adospuntos[m.dbf,2],4)
+select (base_c)
+
+if adospuntos[m.dbf,1] =  "Abonados  " .or. adospuntos[m.dbf,1] = "Clientes  " .or. adospuntos[m.dbf,1] = "Proveedor "
+	if m.todos = .t.
+		append from (adospuntos[m.dbf,2])
+	else
+		set deleted off
+		use (adospuntos[m.dbf,2])
+		copy to array temp for deleted()
+		recall all
+		use (base_c)
+		append from array temp
+		set deleted on
+	endif		
+else
+	for m.mm = 2 to alen(meses)
+		append from (adospuntos[m.dbf,2]) for abonado = abonados.codigo .and. MONTH(FECHA) = MESES[m.mm]
+	next
+endif
+reindex
+
+show get m.iniciar enable

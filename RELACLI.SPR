@@ -1,0 +1,345 @@
+*       *********************************************************
+*       *                                                         
+*       * 25/02/1999            RELACLI.SPR              19:06:09 
+*       *                                                         
+*       *********************************************************
+*       *                                                         
+*       * Nombre del autor                                        
+*       *                                                         
+*       * Copyright (c) 1999 Nombre de la empresa                 
+*       * Dirección                                               
+*       * Ciudad,     C.P.                                        
+*       * País                                              
+*       *                                                         
+*       * Description:                                            
+*       * Este programa lo ha generado automáticamente GENSCRN.    
+*       *                                                         
+*       *********************************************************
+
+
+#REGION 0
+REGIONAL m.currarea, m.talkstat, m.compstat
+
+IF SET("TALK") = "ON"
+	SET TALK OFF
+	m.talkstat = "ON"
+ELSE
+	m.talkstat = "OFF"
+ENDIF
+m.compstat = SET("COMPATIBLE")
+SET COMPATIBLE FOXPLUS
+
+m.rborder = SET("READBORDER")
+SET READBORDER ON
+
+m.currarea = SELECT()
+
+
+*       *********************************************************
+*       *                                                         
+*       *   RELACLI/Windows Bases de datos, índices, relaciones   
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("cliente")
+	SELECT cliente
+	SET ORDER TO TAG "nombre"
+ELSE
+	SELECT 0
+	USE (LOCFILE("cliente.dbf","DBF","Buscar  cliente?"));
+		AGAIN ALIAS cliente ;
+		ORDER TAG "nombre"
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Definiciones de ventana             
+*       *                                                         
+*       *********************************************************
+*
+
+IF NOT WEXIST("relacli") ;
+	OR UPPER(WTITLE("RELACLI")) == "RELACLI.PJX" ;
+	OR UPPER(WTITLE("RELACLI")) == "RELACLI.SCX" ;
+	OR UPPER(WTITLE("RELACLI")) == "RELACLI.MNX" ;
+	OR UPPER(WTITLE("RELACLI")) == "RELACLI.PRG" ;
+	OR UPPER(WTITLE("RELACLI")) == "RELACLI.FRX" ;
+	OR UPPER(WTITLE("RELACLI")) == "RELACLI.QPR"
+	DEFINE WINDOW relacli ;
+		AT 0.000, 2.600 ;
+		SIZE 25.692,108.400 ;
+		TITLE "RELACIONAR CLIENTES  CON ABONADOS" ;
+		FONT "MS Sans Serif", 8 ;
+		FLOAT ;
+		CLOSE ;
+		NOMINIMIZE ;
+		DOUBLE ;
+		COLOR RGB(,,,0,128,128)
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *   RELACLI/Windows Código de configuración - SECCION 2   
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+PRIVATE M.NOMCLI
+M.NOM_ABO= " "
+M.TODOS = .t.
+
+#REGION 1
+DEFINE POPUP _s2t14xzf8 ;
+	PROMPT FIELD Abonados.nombre ;
+	SCROLL
+DEFINE POPUP _s2t14xzf9 ;
+	PROMPT FIELD Cliente.nombre ;
+	SCROLL
+
+*       *********************************************************
+*       *                                                         
+*       *        RELACLI/Windows Distribución de pantalla         
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+IF WVISIBLE("relacli")
+	ACTIVATE WINDOW relacli SAME
+ELSE
+	ACTIVATE WINDOW relacli NOSHOW
+ENDIF
+@ 4.692,7.200 SAY "abonados" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 5.077,45.600 SAY "clientes" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 6.462,81.600 GET M.RELAC ;
+	PICTURE "@*VN RELACIONAR;BORRAR RELACION" ;
+	SIZE 2.000,20.833,0.308 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s2t14xzgc()
+@ 21.231,84.000 GET m.salir ;
+	PICTURE "@*BHT " + ;
+		(LOCFILE("..\wizards\wizbmps\wzclose.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzclose?")) ;
+	SIZE 3.769,14.600,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8
+@ 7.462,2.600 GET M.ABO ;
+ 	PICTURE "@&N" ;
+	POPUP _s2t14xzf8 ;
+	SIZE 13.846,33.400 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "" ;
+	WHEN _s2t14xzhs()
+@ 7.462,38.600 GET M.CLIE ;
+ 	PICTURE "@&N" ;
+	POPUP _s2t14xzf9 ;
+	SIZE 13.846,35.800 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "" ;
+	WHEN _s2t14xzig()
+@ 1.000,28.800 SAY "RELACIONAR CLIENTES CON ABONADOS" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 22.231,2.800 SAY Abonados.cuit ;
+	SIZE 1.000,17.000 ;
+	FONT "MS Sans Serif", 8
+@ 14.846,81.600 GET M.TODOS ;
+	PICTURE "@*C TODOS" ;
+	SIZE 1.308,11.667 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	WHEN _s2t14xzja()
+@ 22.231,38.800 SAY Cliente.cuit ;
+	SIZE 1.000,17.200 ;
+	FONT "MS Sans Serif", 8
+
+IF NOT WVISIBLE("relacli")
+	ACTIVATE WINDOW relacli
+ENDIF
+
+READ CYCLE MODAL ;
+	SHOW _s2t14xzk8()
+
+RELEASE WINDOW relacli
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Cerrando bases de datos             
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("cliente")
+	SELECT cliente
+	USE
+ENDIF
+
+SELECT (m.currarea)
+
+RELEASE POPUPS _s2t14xzf8, _s2t14xzf9
+
+#REGION 0
+
+SET READBORDER &rborder
+
+IF m.talkstat = "ON"
+	SET TALK ON
+ENDIF
+IF m.compstat = "ON"
+	SET COMPATIBLE ON
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XZGC           M.RELAC VALID                      
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RELACLI,     Record Number:    5   
+*       * Variable:            M.RELAC                            
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      1                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xzgc     &&  M.RELAC VALID
+#REGION 1
+DO CASE
+CASE M.RELAC = 1
+	SHOW GETS
+	IF .NOT. ABONADOS.CODIGO $ CLIENTE.ABONADO
+		PRIVATE RELACOD
+		RELACOD = ABONADOS.CODIGO + CLIENTE.ABONADO
+		REPLACE CLIENTE.ABONADO WITH RELACOD
+	ELSE
+		WAIT WINDOW NOWAIT "YA EXISTE ESTA RELACION"
+	ENDIF
+CASE M.RELAC = 2
+	IF ABONADOS.CODIGO $ CLIENTE.ABONADO
+		PRIVATE M.NOMCLI1
+		PRIVATE M.ABOCOD
+		M.ABOCOD = ABONADOS.CODIGO
+		M.NOMCLI1 = CLIENTE.ABONADO
+		M.NOMCLI1 = STUFF( M.NOMCLI1, AT(M.ABOCOD, M.NOMCLI1),1, "")
+		REPLACE ABONADO WITH M.NOMCLI1
+		SHOW GETS
+	ELSE
+		WAIT WINDOW NOWAIT "NO EXISTE LA RELACION"
+	ENDIF
+ENDCASE
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XZHS           M.ABO WHEN                         
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RELACLI,     Record Number:    7   
+*       * Variable:            M.ABO                              
+*       * Called By:           WHEN Clause                        
+*       * Object Type:         List                               
+*       * Snippet Number:      2                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xzhs     &&  M.ABO WHEN
+#REGION 1
+IF M.TODOS = .F.
+	SET FILTER TO ABONADOS.CODIGO $ CLIENTE.ABONADO
+ENDIF
+SHOW GETS
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XZIG           M.CLIE WHEN                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RELACLI,     Record Number:    8   
+*       * Variable:            M.CLIE                             
+*       * Called By:           WHEN Clause                        
+*       * Object Type:         List                               
+*       * Snippet Number:      3                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xzig     &&  M.CLIE WHEN
+#REGION 1
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XZJA           M.TODOS WHEN                       
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RELACLI,     Record Number:   11   
+*       * Variable:            M.TODOS                            
+*       * Called By:           WHEN Clause                        
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      4                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xzja     &&  M.TODOS WHEN
+#REGION 1
+IF M.TODOS = .T.
+	SET FILTER TO
+ELSE
+	SET FILTER TO ABONADOS.CODIGO $ CLIENTE.ABONADO
+ENDIF
+SHOW GETS
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14XZK8           Nivel de lectura SHOW              
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RELACLI                            
+*       * Called By:           READ Statement                     
+*       * Snippet Number:      5                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14xzk8     && Read Level Show
+PRIVATE currwind
+STORE WOUTPUT() TO currwind
+*
+* Código SHOW de la pantalla: RELACLI
+*
+#REGION 1
+IF SYS(2016) = "RELACLI" OR SYS(2016) = "*"
+	ACTIVATE WINDOW relacli SAME
+	@ 22.231,2.800 SAY Abonados.cuit ;
+		SIZE 1.000,17.000, 0.000 ;
+		FONT "MS Sans Serif", 8
+	@ 22.231,38.800 SAY Cliente.cuit ;
+		SIZE 1.000,17.200, 0.000 ;
+		FONT "MS Sans Serif", 8
+ENDIF
+IF NOT EMPTY(currwind)
+	ACTIVATE WINDOW (currwind) SAME
+ENDIF

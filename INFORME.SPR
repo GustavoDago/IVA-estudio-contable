@@ -1,0 +1,604 @@
+*       *********************************************************
+*       *                                                         
+*       * 02/03/1999            INFORME.SPR              14:24:29 
+*       *                                                         
+*       *********************************************************
+*       *                                                         
+*       * Nombre del autor                                        
+*       *                                                         
+*       * Copyright (c) 1999 Nombre de la empresa                 
+*       * Dirección                                               
+*       * Ciudad,     C.P.                                        
+*       * País                                              
+*       *                                                         
+*       * Description:                                            
+*       * Este programa lo ha generado automáticamente GENSCRN.    
+*       *                                                         
+*       *********************************************************
+
+
+#REGION 0
+REGIONAL m.currarea, m.talkstat, m.compstat
+
+IF SET("TALK") = "ON"
+	SET TALK OFF
+	m.talkstat = "ON"
+ELSE
+	m.talkstat = "OFF"
+ENDIF
+m.compstat = SET("COMPATIBLE")
+SET COMPATIBLE FOXPLUS
+
+m.rborder = SET("READBORDER")
+SET READBORDER ON
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Definiciones de ventana             
+*       *                                                         
+*       *********************************************************
+*
+
+IF NOT WEXIST("infocompra") ;
+	OR UPPER(WTITLE("INFOCOMPRA")) == "INFOCOMPRA.PJX" ;
+	OR UPPER(WTITLE("INFOCOMPRA")) == "INFOCOMPRA.SCX" ;
+	OR UPPER(WTITLE("INFOCOMPRA")) == "INFOCOMPRA.MNX" ;
+	OR UPPER(WTITLE("INFOCOMPRA")) == "INFOCOMPRA.PRG" ;
+	OR UPPER(WTITLE("INFOCOMPRA")) == "INFOCOMPRA.FRX" ;
+	OR UPPER(WTITLE("INFOCOMPRA")) == "INFOCOMPRA.QPR"
+	DEFINE WINDOW infocompra ;
+		AT  0.000, 0.000  ;
+		SIZE 26.615,109.200 ;
+		TITLE "informe de IVA COMPRAS" ;
+		FONT "MS Sans Serif", 8 ;
+		FLOAT ;
+		NOCLOSE ;
+		MINIMIZE ;
+		SYSTEM
+	MOVE WINDOW infocompra CENTER
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *   INFORME/Windows Código de configuración - SECCION 2   
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+store .f. to m.ene, m.feb, m.mar, m.abr, m.may, m.jun, m.jul, m.ago, m.set, m.oct, m.nov, m.dic
+
+DECLARE COMPROB(8)
+COMPROB[1] = "FC A"
+COMPROB[2] = "ND A"
+COMPROB[3] = "NC A"
+COMPROB[4] = "FC B"
+COMPROB[5] = "ND B"
+COMPROB[6] = "NC B"
+COMPROB[7] = "FC C"
+COMPROB[8] = "T   "
+
+*********************************
+
+SELECT PROVEDOR
+SET ORDER TO 3
+GO TOP
+SELECT IVACOMPR
+
+count for Abonados.codigo $ Ivacompr.Abonado .AND. MARCA <> "V" to b
+if b = 0
+	WAIT WINDOW NOWAIT "NO EXISTEN REGISTROS A IMPRIMIRSE"
+	RETURN
+ENDIF
+
+SET RELATION TO COD_PROV INTO PROVEDOR
+set skip to provedor
+go top
+SET DELETED ON
+
+
+create cursor interno (marca c(1), fecha d(8), numero c(13), tipo c(4), nombre c(30), registro n(4))
+
+SELECT IVACOMPR
+
+scan FOR ABONADOS.CODIGO $ IVACOMPR.ABONADO .AND. MARCA <> "V"
+	insert into interno values(Ivacompr.marca, Ivacompr.fecha, Ivacompr.numero, COMPROB[Ivacompr.tipo], Provedor.nombre, RECNO("ivacompr"))
+ENDSCAN
+
+SELECT interno
+
+#REGION 1
+DEFINE POPUP _s2y0uvr4l ;
+	PROMPT FIELD Interno.marca + "  " + dtoc(Interno.fecha) + "   " + "  " + Interno.numero + " " + Interno.tipo + "  " +   Interno.nombre ;
+	SCROLL
+
+*       *********************************************************
+*       *                                                         
+*       *        INFORME/Windows Distribución de pantalla         
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+IF WVISIBLE("infocompra")
+	ACTIVATE WINDOW infocompra SAME
+ELSE
+	ACTIVATE WINDOW infocompra NOSHOW
+ENDIF
+@ 2.846,4.400 SAY "MES A IMPRIMIR:" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 0.769,28.800 SAY "HACER INFORME IVA COMPRAS" ;
+	FONT "MicrogrammaDMedExt", 11 ;
+	STYLE "BT"
+@ 4.615,4.800 GET M.MESIMP ;
+	PICTURE "@^" ;
+	FROM MESES ;
+	SIZE 1.538,14.000 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B"
+@ 6.462,4.800 GET M.ANIOIMP ;
+	PICTURE "@^ 1995;1996;1997;1998;1999;2000;2001;2002;2003;2004;2005" ;
+	SIZE 1.538,14.167 ;
+	DEFAULT "1998" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B"
+@ 13.923,88.200 GET M.MOSTRAR ;
+	PICTURE "@*RVN PANTALLA;IMPRESORA" ;
+	SIZE 1.308,16.667,0.308 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT"
+@ 17.538,90.400 GET m.ACEPTAR ;
+	PICTURE "@*VN MOSTRAR" ;
+	SIZE 2.077,13.833,0.308 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s2y0uvr5h()
+@ 22.154,94.000 GET m.salir ;
+	PICTURE "@*BHT " + ;
+		(LOCFILE("..\wizards\wizbmps\wzclose.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzclose?")) ;
+	SIZE 3.615,14.200,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8
+@ 8.692,2.600 GET M.SELEC ;
+ 	PICTURE "@&N" ;
+	POPUP _s2y0uvr4l ;
+	SIZE 20.091,59.857 ;
+	DEFAULT " " ;
+	FONT "FoxPrint", 8 ;
+	STYLE "" ;
+	VALID _s2y0uvr6n()
+@ 2.846,36.000 GET m.ene ;
+	PICTURE "@*C enero" ;
+	SIZE 1.308,9.833 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0uvr75()
+@ 4.692,36.000 GET m.feb ;
+	PICTURE "@*C febrero" ;
+	SIZE 1.308,11.167 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0uvr7o()
+@ 6.538,36.000 GET m.mar ;
+	PICTURE "@*C marzo" ;
+	SIZE 1.308,10.000 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0uvr85()
+@ 2.846,52.800 GET m.abr ;
+	PICTURE "@*C abril" ;
+	SIZE 1.308,8.500 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0uvr8n()
+@ 4.692,52.800 GET m.may ;
+	PICTURE "@*C mayo" ;
+	SIZE 1.308,9.333 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0uvr97()
+@ 6.538,52.800 GET m.jun ;
+	PICTURE "@*C junio" ;
+	SIZE 1.308,9.000 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0uvr9q()
+@ 2.846,67.200 GET m.jul ;
+	PICTURE "@*C julio" ;
+	SIZE 1.308,8.333 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0uvra7()
+@ 4.692,67.200 GET m.ago ;
+	PICTURE "@*C agosto" ;
+	SIZE 1.308,10.833 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0uvraq()
+@ 6.538,67.200 GET m.set ;
+	PICTURE "@*C setiembre" ;
+	SIZE 1.308,13.500 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0uvrb7()
+@ 2.846,84.000 GET m.oct ;
+	PICTURE "@*C octubre" ;
+	SIZE 1.308,11.667 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0uvrbp()
+@ 4.692,84.000 GET m.nov ;
+	PICTURE "@*C noviembre" ;
+	SIZE 1.308,14.167 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0uvrc9()
+@ 6.538,84.000 GET m.dic ;
+	PICTURE "@*C diciembre" ;
+	SIZE 1.308,13.500 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	VALID _s2y0uvrcr()
+
+IF NOT WVISIBLE("infocompra")
+	ACTIVATE WINDOW infocompra
+ENDIF
+
+READ CYCLE MODAL
+
+RELEASE WINDOW infocompra
+RELEASE POPUPS _s2y0uvr4l
+
+#REGION 0
+
+SET READBORDER &rborder
+
+IF m.talkstat = "ON"
+	SET TALK ON
+ENDIF
+IF m.compstat = "ON"
+	SET COMPATIBLE ON
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *           INFORME/Windows Código de limpieza            
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+select interno
+use
+SELECT IVACOMPR
+set filter to ABONADOS.CODIGO $ IVACOMPR.ABONADO
+set skip to
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0UVR5H           m.ACEPTAR VALID                    
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         INFORME,     Record Number:    7   
+*       * Variable:            m.ACEPTAR                          
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      1                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0uvr5h     &&  m.ACEPTAR VALID
+#REGION 1
+select interno
+scan
+	select ivacompr
+	goto interno.registro
+	replace marca with interno.marca
+	select interno
+endscan
+
+select ivacompr	
+SET ORDER TO 1
+IF M.MOSTRAR = 1
+		REPORT FORM IVACOMPR NOCONSOLE FOR IVACOMPR.ABONADO = ABONADOS.CODIGO .AND. marca = "x" PREVIEW
+ELSE
+		REPORT FORM IVACOMPR NOCONSOLE FOR IVACOMPR.ABONADO = ABONADOS.CODIGO .AND. marca = "x" TO PRINTER PROMPT
+		do mensaje.spr
+ENDIF
+set order to M.ORDEN
+GO TOP
+select interno
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0UVR6N           M.SELEC VALID                      
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         INFORME,     Record Number:    9   
+*       * Variable:            M.SELEC                            
+*       * Called By:           VALID Clause                       
+*       * Object Type:         List                               
+*       * Snippet Number:      2                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0uvr6n     &&  M.SELEC VALID
+#REGION 1
+replace marca with IIF(marca = " " ,"x", " ")
+m.selec = Interno.marca + "  " + dtoc(Interno.fecha) + "   " + "  " + Interno.numero + " " + Interno.tipo + "  " + Interno.nombre
+SHOW GET M.SELEC
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0UVR75           m.ene VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         INFORME,     Record Number:   10   
+*       * Variable:            m.ene                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      3                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0uvr75     &&  m.ene VALID
+#REGION 1
+replace marca with IIF(m.ene = .t. ,"x", " ") all for month(fecha) = 1
+go top
+show get m.selec
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0UVR7O           m.feb VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         INFORME,     Record Number:   11   
+*       * Variable:            m.feb                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      4                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0uvr7o     &&  m.feb VALID
+#REGION 1
+replace marca with IIF(m.feb = .t. ,"x", " ") all for month(fecha) = 2
+go top
+show get m.selec
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0UVR85           m.mar VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         INFORME,     Record Number:   12   
+*       * Variable:            m.mar                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      5                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0uvr85     &&  m.mar VALID
+#REGION 1
+replace marca with IIF(m.mar = .t. ,"x", " ") all for month(fecha) = 3
+go top
+show get m.selec
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0UVR8N           m.abr VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         INFORME,     Record Number:   13   
+*       * Variable:            m.abr                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      6                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0uvr8n     &&  m.abr VALID
+#REGION 1
+replace marca with IIF(m.abr = .t. ,"x", " ") all for month(fecha) = 4
+go top
+show get m.selec
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0UVR97           m.may VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         INFORME,     Record Number:   14   
+*       * Variable:            m.may                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      7                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0uvr97     &&  m.may VALID
+#REGION 1
+replace marca with IIF(m.may = .t. ,"x", " ") all for month(fecha) = 5
+go top
+show get m.selec
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0UVR9Q           m.jun VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         INFORME,     Record Number:   15   
+*       * Variable:            m.jun                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      8                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0uvr9q     &&  m.jun VALID
+#REGION 1
+replace marca with IIF(m.jun = .t. ,"x", " ") all for month(fecha) = 6
+go top
+show get m.selec
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0UVRA7           m.jul VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         INFORME,     Record Number:   16   
+*       * Variable:            m.jul                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      9                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0uvra7     &&  m.jul VALID
+#REGION 1
+replace marca with IIF(m.jul = .t. ,"x", " ") all for month(fecha) = 7
+go top
+show get m.selec
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0UVRAQ           m.ago VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         INFORME,     Record Number:   17   
+*       * Variable:            m.ago                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      10                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0uvraq     &&  m.ago VALID
+#REGION 1
+replace marca with IIF(m.ago = .t. ,"x", " ") all for month(fecha) = 8
+go top
+show get m.selec
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0UVRB7           m.set VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         INFORME,     Record Number:   18   
+*       * Variable:            m.set                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      11                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0uvrb7     &&  m.set VALID
+#REGION 1
+replace marca with IIF(m.set = .t. ,"x", " ") all for month(fecha) = 9
+go top
+show get m.selec
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0UVRBP           m.oct VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         INFORME,     Record Number:   19   
+*       * Variable:            m.oct                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      12                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0uvrbp     &&  m.oct VALID
+#REGION 1
+replace marca with IIF(m.oct = .t. ,"x", " ") all for month(fecha) = 10
+go top
+show get m.selec
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0UVRC9           m.nov VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         INFORME,     Record Number:   20   
+*       * Variable:            m.nov                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      13                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0uvrc9     &&  m.nov VALID
+#REGION 1
+replace marca with IIF(m.nov = .t. ,"x", " ") all for month(fecha) = 11
+go top
+show get m.selec
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0UVRCR           m.dic VALID                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         INFORME,     Record Number:   21   
+*       * Variable:            m.dic                              
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      14                                 
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0uvrcr     &&  m.dic VALID
+#REGION 1
+replace marca with IIF(m.dic = .t. ,"x", " ") all for month(fecha) = 12
+go top
+show get m.selec

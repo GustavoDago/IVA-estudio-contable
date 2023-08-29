@@ -1,0 +1,120 @@
+*       *********************************************************
+*       *                                                         
+*       * 25/02/1999            MENSAJE.SPR              19:06:16 
+*       *                                                         
+*       *********************************************************
+*       *                                                         
+*       * Nombre del autor                                        
+*       *                                                         
+*       * Copyright (c) 1999 Nombre de la empresa                 
+*       * Dirección                                               
+*       * Ciudad,     C.P.                                        
+*       * País                                              
+*       *                                                         
+*       * Description:                                            
+*       * Este programa lo ha generado automáticamente GENSCRN.    
+*       *                                                         
+*       *********************************************************
+
+
+#REGION 0
+REGIONAL m.currarea, m.talkstat, m.compstat
+
+IF SET("TALK") = "ON"
+	SET TALK OFF
+	m.talkstat = "ON"
+ELSE
+	m.talkstat = "OFF"
+ENDIF
+m.compstat = SET("COMPATIBLE")
+SET COMPATIBLE FOXPLUS
+
+m.rborder = SET("READBORDER")
+SET READBORDER ON
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Definiciones de ventana             
+*       *                                                         
+*       *********************************************************
+*
+
+IF NOT WEXIST("_s2t14y48o")
+	DEFINE WINDOW _s2t14y48o ;
+		AT 9.474, 27.429 ;
+		SIZE 8.308,43.600 ;
+		TITLE "MENSAJE" ;
+		FONT "MS Sans Serif", 8 ;
+		FLOAT ;
+		CLOSE ;
+		NOMINIMIZE ;
+		DOUBLE ;
+		COLOR RGB(,,,0,128,128)
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *        MENSAJE/Windows Distribución de pantalla         
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+IF WVISIBLE("_s2t14y48o")
+	ACTIVATE WINDOW _s2t14y48o SAME
+ELSE
+	ACTIVATE WINDOW _s2t14y48o NOSHOW
+ENDIF
+@ 1.923,2.400 SAY "¿ SE IMPRIMIO CORRECTAMENTE ?" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 5.538,7.200 GET M.NI ;
+	PICTURE "@*HT SI;NO" ;
+	SIZE 1.769,10.667,2.667 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s2t14y4bh()
+
+IF NOT WVISIBLE("_s2t14y48o")
+	ACTIVATE WINDOW _s2t14y48o
+ENDIF
+
+READ CYCLE MODAL
+
+RELEASE WINDOW _s2t14y48o
+
+#REGION 0
+
+SET READBORDER &rborder
+
+IF m.talkstat = "ON"
+	SET TALK ON
+ENDIF
+IF m.compstat = "ON"
+	SET COMPATIBLE ON
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14Y4BH           M.NI VALID                         
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         MENSAJE,     Record Number:    3   
+*       * Variable:            M.NI                               
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      1                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14y4bh     &&  M.NI VALID
+#REGION 1
+SELECT IVACOMPR
+IF NI = 1
+	REPLACE marca with "V" all for marca = "x"
+endif

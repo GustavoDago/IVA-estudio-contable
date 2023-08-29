@@ -1,0 +1,10 @@
+if a_prove[m.prov,4] = "R.I." .and. m.ticket = .f.
+	m.ivageneral = (m.imporfac - m.conograb - m.operexen - m.ret_pcta - m.ret_ingbru )/ (1 + A_IVA[m.iva,2]) * A_IVA[m.iva,2]
+	m.impnetgrab = (m.imporfac - m.conograb - m.operexen - m.ret_pcta - m.ret_ingbru)/ (1 + A_IVA[m.iva,2])
+	M.ivanoins = 0
+ELSE
+	m.ivageneral = 0
+	m.impnetgrab = m.imporfac - M.operexen - m.conograb
+	M.ivanoins = 0
+ENDIF
+show gets

@@ -1,0 +1,285 @@
+*       *********************************************************
+*       *                                                         
+*       * 02/03/99              HACER.SPR                11:06:24 
+*       *                                                         
+*       *********************************************************
+*       *                                                         
+*       * Nombre del autor                                        
+*       *                                                         
+*       * Copyright (c) 1999 Nombre de la empresa                 
+*       * Dirección                                               
+*       * Ciudad,     C.P.                                        
+*       * País                                              
+*       *                                                         
+*       * Description:                                            
+*       * Este programa lo ha generado automáticamente GENSCRN.    
+*       *                                                         
+*       *********************************************************
+
+
+#REGION 0
+REGIONAL m.currarea, m.talkstat, m.compstat
+
+IF SET("TALK") = "ON"
+	SET TALK OFF
+	m.talkstat = "ON"
+ELSE
+	m.talkstat = "OFF"
+ENDIF
+m.compstat = SET("COMPATIBLE")
+SET COMPATIBLE FOXPLUS
+
+m.rborder = SET("READBORDER")
+SET READBORDER ON
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Definiciones de ventana             
+*       *                                                         
+*       *********************************************************
+*
+
+IF NOT WEXIST("alerta") ;
+	OR UPPER(WTITLE("ALERTA")) == "ALERTA.PJX" ;
+	OR UPPER(WTITLE("ALERTA")) == "ALERTA.SCX" ;
+	OR UPPER(WTITLE("ALERTA")) == "ALERTA.MNX" ;
+	OR UPPER(WTITLE("ALERTA")) == "ALERTA.PRG" ;
+	OR UPPER(WTITLE("ALERTA")) == "ALERTA.FRX" ;
+	OR UPPER(WTITLE("ALERTA")) == "ALERTA.QPR"
+	DEFINE WINDOW alerta ;
+		AT  0.000, 0.000  ;
+		SIZE 9.385,71.000 ;
+		TITLE "ALERTA" ;
+		FONT "MS Sans Serif", 8 ;
+		FLOAT ;
+		NOCLOSE ;
+		NOMINIMIZE ;
+		DOUBLE ;
+		FILL FILE LOCFILE("HACER.BMP","BMP|ICO|PCT|ICN", ;
+			"¿Dónde está hacer?")
+	MOVE WINDOW alerta CENTER
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *         HACER/Windows Distribución de pantalla          
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+IF WVISIBLE("alerta")
+	ACTIVATE WINDOW alerta SAME
+ELSE
+	ACTIVATE WINDOW alerta NOSHOW
+ENDIF
+@ 7.385,36.000 GET M.DESIDE ;
+	PICTURE "@*HN ¡¡¡ INICIAR !!!" ;
+	SIZE 1.769,14.167,6.667 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s2y0nt05w()
+@ 0.000,14.400 SAY "ASEGURESE DE HABER COLOCADO" + CHR(13) + ;
+		"UN DISQUETTE VACÍO DE ALTA DENSIDAD" + CHR(13) + ;
+		"PARA HACER LA COPIA RESPALDO" ;
+	SIZE 3.000,36.571, 0.000 ;
+	PICTURE "@I" ;
+	FONT "Impact", 12 ;
+	STYLE "T" ;
+	COLOR RGB(255,255,255,255,255,255)
+@ 2.769,2.400 SAY (LOCFILE("disk12.bmp","BMP|ICO|PCT|ICN", "¿Dónde está disk12?" )) BITMAP ;
+	SIZE 2.462,6.400 ;
+	STYLE "T"
+@ 0.000,0.000 TO 9.385,71.000 ;
+	PEN 2, 8 ;
+	COLOR RGB(255,0,0,,,,)
+@ 7.231,57.600 GET m.salir ;
+	PICTURE "@*BHT " + ;
+		(LOCFILE("..\wizards\wizbmps\wzclose.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzclose?")) ;
+	SIZE 2.000,13.000,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	VALID _s2y0nt092()
+@ 0.923,7.200 SAY (LOCFILE("disk12.bmp","BMP|ICO|PCT|ICN", "¿Dónde está disk12?" )) BITMAP ;
+	SIZE 2.462,6.400 ;
+	STYLE "T"
+@ 5.385,2.400 SAY "Borrar registros al salir" ;
+	PICTURE "@I" ;
+	FONT "Arial", 8 ;
+	STYLE "BT"
+@ 6.385,2.400 GET m.radio ;
+	PICTURE "@*RVN Si;No" ;
+	SIZE 1.308,7.167,0.308 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT"
+
+IF NOT WVISIBLE("alerta")
+	ACTIVATE WINDOW alerta
+ENDIF
+
+READ CYCLE MODAL
+
+RELEASE WINDOW alerta
+
+#REGION 0
+
+SET READBORDER &rborder
+
+IF m.talkstat = "ON"
+	SET TALK ON
+ENDIF
+IF m.compstat = "ON"
+	SET COMPATIBLE ON
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT05W           M.DESIDE VALID                     
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         HACER,     Record Number:    2     
+*       * Variable:            M.DESIDE                           
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      1                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt05w     &&  M.DESIDE VALID
+#REGION 1
+SHOW GETS DISABLE
+set safety off
+do case
+case m.quecopia = 1
+	SELECT ABONADOS
+	COPY TO A:\ABONADOS WITH CDX
+	SELECT cliente
+	COPY TO A:\cliente WITH CDX
+	SELECT ivacompr
+	COPY TO A:\ivacompr WITH CDX
+	use a:\ivacompr in 0
+	replace marca with "x" all
+	use
+	SELECT ivaventa
+	COPY TO A:\ivaventa WITH CDX
+	SELECT provedor
+	COPY TO A:\provedor WITH CDX
+case m.quecopia = 2
+	SELECT ivacompr
+	COPY TO A:\ivacompr WITH CDX
+	use a:\ivacompr in 0
+	replace marca with "x" all
+	use
+	SELECT ivaventa
+	COPY TO A:\ivaventa WITH CDX
+case m.quecopia = 3
+	select ivacompr
+	= afields(temp)
+	create cursor tempo from array temp
+	SELECT ELEM
+	set filter to
+	go top
+	cp = 1
+	SCAN FOR BASE = 1
+		select ivacompr
+		if cp = 1
+			IF.not. file("a:\ivacompr.dbf")
+				copy structure to a:\ivacompr cdx
+			ENDIF
+			SELECT 0
+			USE A:\Ivacompr
+			select ivacompr
+			cp = 0
+		endif
+		copy to tempo FOR Ivacompr.abonado = Elem.codigo .and. Ivacompr.fecha > Elem.inicio .and. Ivacompr.fecha < Elem.final WITH CDX
+		select (select(0) - 1)
+		append from tempo
+		SELECT ELEM
+	ENDSCAN
+	if cp = 0
+		select (select(0) - 1)
+		REPLACE marca WITH "x" ALL
+		use
+	endif
+	select tempo
+	use
+	select ivaventa
+	= afields(temp1)
+	create cursor tempo from array temp1	
+	SELECT ELEM
+	go top
+	cp = 1
+	SCAN FOR BASE = 2
+		select ivaventa
+		if cp = 1
+			if .not. file("a:\ivaventa.dbf")
+				copy structure to a:\ivaventa cdx
+			endif
+			select 0
+			use a:\Ivaventa
+			cp = 0
+			select ivaventa
+		endif
+		
+		COPY TO tempo FOR Ivaventa.abonado = Elem.codigo .and. Ivaventa.fecha > Elem.inicio .and. Ivaventa.fecha < Elem.final WITH CDX
+		select (select(0) - 1)
+		append from tempo
+		select elem 		
+	ENDSCAN
+	if cp = 0
+		select (select(0) - 1)
+		use
+	endif
+	select tempo
+	use
+	select elem
+	set filter to base = m.base
+endcase
+select abonados
+SET SAFETY ON
+SHOW GETS ENABLE
+
+*       *********************************************************
+*       *                                                         
+*       * _S2Y0NT092           m.salir VALID                      
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         HACER,     Record Number:    6     
+*       * Variable:            m.salir                            
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      2                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2y0nt092     &&  m.salir VALID
+#REGION 1
+if m.quecopia = 3 .and. m.radio = 1
+	SELECT ELEM
+	set filter to	
+	SCAN FOR BASE = 1
+		select ivacompr
+		DELETE FOR Ivacompr.abonado = Elem.codigo .and. Ivacompr.fecha > Elem.inicio .and. Ivacompr.fecha < Elem.final
+		SELECT ELEM
+	ENDSCAN
+	SELECT IVACOMPR
+	PACK
+	SELECT ELEM
+	go top
+	SCAN FOR BASE = 2
+		SELECT ivaventa
+		DELETE FOR Ivaventa.abonado = Elem.codigo .and. Ivaventa.fecha > Elem.inicio .and. Ivaventa.fecha < Elem.final
+		select elem 		
+	ENDSCAN
+	SELECT IVAVENTA
+	PACK
+endif
+select abonados

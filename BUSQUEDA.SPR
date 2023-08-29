@@ -1,0 +1,178 @@
+*       *********************************************************
+*       *                                                         
+*       * 03/05/99            BUSQUEDA.SPR               16:43:05 
+*       *                                                         
+*       *********************************************************
+*       *                                                         
+*       * Nombre del autor                                        
+*       *                                                         
+*       * Copyright (c) 1999 Nombre de la empresa                 
+*       * Dirección                                               
+*       * Ciudad,     C.P.                                        
+*       * País                                              
+*       *                                                         
+*       * Description:                                            
+*       * Este programa lo ha generado automáticamente GENSCRN.    
+*       *                                                         
+*       *********************************************************
+
+
+#REGION 0
+REGIONAL m.currarea, m.talkstat, m.compstat
+
+IF SET("TALK") = "ON"
+	SET TALK OFF
+	m.talkstat = "ON"
+ELSE
+	m.talkstat = "OFF"
+ENDIF
+m.compstat = SET("COMPATIBLE")
+SET COMPATIBLE FOXPLUS
+
+m.rborder = SET("READBORDER")
+SET READBORDER ON
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Definiciones de ventana             
+*       *                                                         
+*       *********************************************************
+*
+
+IF NOT WEXIST("buscar") ;
+	OR UPPER(WTITLE("BUSCAR")) == "BUSCAR.PJX" ;
+	OR UPPER(WTITLE("BUSCAR")) == "BUSCAR.SCX" ;
+	OR UPPER(WTITLE("BUSCAR")) == "BUSCAR.MNX" ;
+	OR UPPER(WTITLE("BUSCAR")) == "BUSCAR.PRG" ;
+	OR UPPER(WTITLE("BUSCAR")) == "BUSCAR.FRX" ;
+	OR UPPER(WTITLE("BUSCAR")) == "BUSCAR.QPR"
+	DEFINE WINDOW buscar ;
+		AT  0.000, 0.000  ;
+		SIZE 7.769,51.400 ;
+		TITLE "BUSQUEDAS" ;
+		FONT "MS Sans Serif", 8 ;
+		FLOAT ;
+		NOCLOSE ;
+		MINIMIZE ;
+		SYSTEM ;
+		FILL FILE LOCFILE("FOVENTA.BMP","BMP|ICO|PCT|ICN", ;
+			"¿Dónde está foventa?")
+	MOVE WINDOW buscar CENTER
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *        BUSQUEDA/Windows Distribución de pantalla        
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+IF WVISIBLE("buscar")
+	ACTIVATE WINDOW buscar SAME
+ELSE
+	ACTIVATE WINDOW buscar NOSHOW
+ENDIF
+@ 1.000,2.400 SAY "Fecha" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 2.846,2.400 SAY "Tipo" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 6.538,2.400 SAY "Numero" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 4.692,2.400 SAY "Sucursal" ;
+	PICTURE "@I" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 1.000,14.800 GET M.FECHA ;
+	SIZE 1.000,11.400 ;
+	DEFAULT {  /  /  } ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "@E"
+@ 2.769,14.400 GET M.TIPO ;
+	PICTURE "@^" ;
+	FROM COMPROB ;
+	SIZE 1.538,10.333 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B"
+@ 4.615,14.400 GET M.SUCURSAL ;
+	PICTURE "@^" ;
+	FROM SUCU ;
+	SIZE 1.538,10.333 ;
+	RANGE , m.num_suc ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B"
+@ 6.538,14.800 GET M.NUMERO ;
+	SIZE 1.000,16.200 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	PICTURE "99999999"
+@ 1.846,36.000 GET M.encontrar ;
+	PICTURE "@*HN BUSCAR" ;
+	SIZE 1.769,10.500,0.667 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s4o0ztzfc()
+@ 4.615,36.000 GET M.vuelve ;
+	PICTURE "@*HT VOLVER" ;
+	SIZE 1.769,10.333,0.667 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B"
+
+IF NOT WVISIBLE("buscar")
+	ACTIVATE WINDOW buscar
+ENDIF
+
+READ CYCLE MODAL
+
+RELEASE WINDOW buscar
+
+#REGION 0
+
+SET READBORDER &rborder
+
+IF m.talkstat = "ON"
+	SET TALK ON
+ENDIF
+IF m.compstat = "ON"
+	SET COMPATIBLE ON
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S4O0ZTZFC           M.encontrar VALID                  
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         BUSQUEDA,     Record Number:   10  
+*       * Variable:            M.encontrar                        
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      1                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s4o0ztzfc     &&  M.encontrar VALID
+#REGION 1
+locate for ivaventa.fecha = m.fecha .and. ivaventa.tipo = m.tipo .and. ivaventa.sucursal = m.sucursal .and. ivaventa.numero = m.numero
+if .NOT. found()
+	wait window nowait "REGISTRO NO ENCONTRADO"
+ELSE
+	wait window nowait "¡¡ FACTURA ENCONTRADA !!"
+	select cliente
+	scatter memvar
+	select ivaventa
+ENDIF
+

@@ -1,0 +1,345 @@
+*       *********************************************************
+*       *                                                         
+*       * 25/02/1999            RELAPRO.SPR              19:06:10 
+*       *                                                         
+*       *********************************************************
+*       *                                                         
+*       * Nombre del autor                                        
+*       *                                                         
+*       * Copyright (c) 1999 Nombre de la empresa                 
+*       * Dirección                                               
+*       * Ciudad,     C.P.                                        
+*       * País                                              
+*       *                                                         
+*       * Description:                                            
+*       * Este programa lo ha generado automáticamente GENSCRN.    
+*       *                                                         
+*       *********************************************************
+
+
+#REGION 0
+REGIONAL m.currarea, m.talkstat, m.compstat
+
+IF SET("TALK") = "ON"
+	SET TALK OFF
+	m.talkstat = "ON"
+ELSE
+	m.talkstat = "OFF"
+ENDIF
+m.compstat = SET("COMPATIBLE")
+SET COMPATIBLE FOXPLUS
+
+m.rborder = SET("READBORDER")
+SET READBORDER ON
+
+m.currarea = SELECT()
+
+
+*       *********************************************************
+*       *                                                         
+*       *   RELAPRO/Windows Bases de datos, índices, relaciones   
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("provedor")
+	SELECT provedor
+	SET ORDER TO TAG "nombre"
+ELSE
+	SELECT 0
+	USE (LOCFILE("provedor.dbf","DBF","Buscar  provedor?"));
+		AGAIN ALIAS provedor ;
+		ORDER TAG "nombre"
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Definiciones de ventana             
+*       *                                                         
+*       *********************************************************
+*
+
+IF NOT WEXIST("relapro") ;
+	OR UPPER(WTITLE("RELAPRO")) == "RELAPRO.PJX" ;
+	OR UPPER(WTITLE("RELAPRO")) == "RELAPRO.SCX" ;
+	OR UPPER(WTITLE("RELAPRO")) == "RELAPRO.MNX" ;
+	OR UPPER(WTITLE("RELAPRO")) == "RELAPRO.PRG" ;
+	OR UPPER(WTITLE("RELAPRO")) == "RELAPRO.FRX" ;
+	OR UPPER(WTITLE("RELAPRO")) == "RELAPRO.QPR"
+	DEFINE WINDOW relapro ;
+		AT 0.000, 6.000 ;
+		SIZE 24.385,106.600 ;
+		TITLE "RELACI0NAR PROVEEDORES CON ABONADOS" ;
+		FONT "MS Sans Serif", 8 ;
+		FLOAT ;
+		CLOSE ;
+		NOMINIMIZE ;
+		DOUBLE ;
+		COLOR RGB(,,,128,128,128)
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       *   RELAPRO/Windows Código de configuración - SECCION 2   
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+PRIVATE M.NOMCLI
+M.NOM_ABO= " "
+M.TODOS = .t.
+
+#REGION 1
+DEFINE POPUP _s2t14y009 ;
+	PROMPT FIELD Abonados.nombre ;
+	SCROLL
+DEFINE POPUP _s2t14y00a ;
+	PROMPT FIELD Provedor.nombre  + "                      " +   Provedor.cuit ;
+	SCROLL
+
+*       *********************************************************
+*       *                                                         
+*       *        RELAPRO/Windows Distribución de pantalla         
+*       *                                                         
+*       *********************************************************
+*
+
+#REGION 1
+IF WVISIBLE("relapro")
+	ACTIVATE WINDOW relapro SAME
+ELSE
+	ACTIVATE WINDOW relapro NOSHOW
+ENDIF
+@ 3.769,7.200 SAY "abonados" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 4.154,45.600 SAY "PROVEDORES" ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "T"
+@ 5.538,79.200 GET M.RELAC ;
+	PICTURE "@*VN RELACIONAR;BORRAR RELACION" ;
+	SIZE 2.000,20.833,0.308 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "B" ;
+	VALID _s2t14y01b()
+@ 19.385,81.600 GET m.salir ;
+	PICTURE "@*BHT " + ;
+		(LOCFILE("..\wizards\wizbmps\wzclose.bmp","BMP|ICO|PCT|ICN","¿Dónde está wzclose?")) ;
+	SIZE 3.769,14.600,0.800 ;
+	DEFAULT 1 ;
+	FONT "MS Sans Serif", 8
+@ 6.538,2.600 GET M.ABO ;
+ 	PICTURE "@&N" ;
+	POPUP _s2t14y009 ;
+	SIZE 13.846,33.400 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "" ;
+	WHEN _s2t14y02n()
+@ 6.538,38.600 GET M.PROV ;
+ 	PICTURE "@&N" ;
+	POPUP _s2t14y00a ;
+	SIZE 13.846,35.800 ;
+	DEFAULT " " ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "" ;
+	WHEN _s2t14y03c()
+@ 1.000,28.800 SAY "RELACIONAR PROVEEDORES CON ABONADOS" ;
+	FONT "MS Sans Serif", 8 ;
+	COLOR RGB(,,,0,128,128)
+@ 21.308,2.800 SAY Abonados.cuit ;
+	SIZE 1.000,17.000 ;
+	FONT "MS Sans Serif", 8
+@ 13.923,81.600 GET M.TODOS ;
+	PICTURE "@*C TODOS" ;
+	SIZE 1.308,11.667 ;
+	DEFAULT 0 ;
+	FONT "MS Sans Serif", 8 ;
+	STYLE "BT" ;
+	WHEN _s2t14y046()
+@ 21.308,38.800 SAY Provedor.cuit ;
+	SIZE 1.000,17.200 ;
+	FONT "MS Sans Serif", 8
+
+IF NOT WVISIBLE("relapro")
+	ACTIVATE WINDOW relapro
+ENDIF
+
+READ CYCLE MODAL ;
+	SHOW _s2t14y054()
+
+RELEASE WINDOW relapro
+
+*       *********************************************************
+*       *                                                         
+*       *             Windows Cerrando bases de datos             
+*       *                                                         
+*       *********************************************************
+*
+
+IF USED("provedor")
+	SELECT provedor
+	USE
+ENDIF
+
+SELECT (m.currarea)
+
+RELEASE POPUPS _s2t14y009, _s2t14y00a
+
+#REGION 0
+
+SET READBORDER &rborder
+
+IF m.talkstat = "ON"
+	SET TALK ON
+ENDIF
+IF m.compstat = "ON"
+	SET COMPATIBLE ON
+ENDIF
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14Y01B           M.RELAC VALID                      
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RELAPRO,     Record Number:    5   
+*       * Variable:            M.RELAC                            
+*       * Called By:           VALID Clause                       
+*       * Object Type:         Push Button                        
+*       * Snippet Number:      1                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14y01b     &&  M.RELAC VALID
+#REGION 1
+DO CASE
+CASE M.RELAC = 1
+	SHOW GETS
+	IF .NOT. ABONADOS.CODIGO $ PROVEDOR.ABONADO
+		PRIVATE RELACOD
+		RELACOD = ABONADOS.CODIGO + PROVEDOR.ABONADO
+		REPLACE PROVEDOR.ABONADO WITH RELACOD
+	ELSE
+		WAIT WINDOW NOWAIT "YA EXISTE ESTA RELACION"
+	ENDIF
+CASE M.RELAC = 2
+	IF ABONADOS.CODIGO $ PROVEDOR.ABONADO
+		PRIVATE M.NOMCLI1
+		PRIVATE M.ABOCOD
+		M.ABOCOD = ABONADOS.CODIGO
+		M.NOMCLI1 = PROVEDOR.ABONADO
+		M.NOMCLI1 = STUFF( M.NOMCLI1, AT(M.ABOCOD, M.NOMCLI1),1, "")
+		REPLACE ABONADO WITH M.NOMCLI1
+		SHOW GETS
+	ELSE
+		WAIT WINDOW NOWAIT "NO EXISTE LA RELACION"
+	ENDIF
+ENDCASE
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14Y02N           M.ABO WHEN                         
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RELAPRO,     Record Number:    7   
+*       * Variable:            M.ABO                              
+*       * Called By:           WHEN Clause                        
+*       * Object Type:         List                               
+*       * Snippet Number:      2                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14y02n     &&  M.ABO WHEN
+#REGION 1
+IF M.TODOS = .F.
+	SET FILTER TO ABONADOS.CODIGO $ PROVEDOR.ABONADO
+ENDIF
+SHOW GETS
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14Y03C           M.PROV WHEN                        
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RELAPRO,     Record Number:    8   
+*       * Variable:            M.PROV                             
+*       * Called By:           WHEN Clause                        
+*       * Object Type:         List                               
+*       * Snippet Number:      3                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14y03c     &&  M.PROV WHEN
+#REGION 1
+SHOW GETS
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14Y046           M.TODOS WHEN                       
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RELAPRO,     Record Number:   11   
+*       * Variable:            M.TODOS                            
+*       * Called By:           WHEN Clause                        
+*       * Object Type:         Check Box                          
+*       * Snippet Number:      4                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14y046     &&  M.TODOS WHEN
+#REGION 1
+IF M.TODOS = .T.
+	SET FILTER TO
+ELSE
+	SET FILTER TO ABONADOS.CODIGO $ PROVEDOR.ABONADO
+ENDIF
+SHOW GETS
+
+
+*       *********************************************************
+*       *                                                         
+*       * _S2T14Y054           Nivel de lectura SHOW              
+*       *                                                         
+*       * Function Origin:                                        
+*       *                                                         
+*       *                                                         
+*       * From Platform:       Windows                            
+*       * From Screen:         RELAPRO                            
+*       * Called By:           READ Statement                     
+*       * Snippet Number:      5                                  
+*       *                                                         
+*       *********************************************************
+*
+FUNCTION _s2t14y054     && Read Level Show
+PRIVATE currwind
+STORE WOUTPUT() TO currwind
+*
+* Código SHOW de la pantalla: RELAPRO
+*
+#REGION 1
+IF SYS(2016) = "RELAPRO" OR SYS(2016) = "*"
+	ACTIVATE WINDOW relapro SAME
+	@ 21.308,2.800 SAY Abonados.cuit ;
+		SIZE 1.000,17.000, 0.000 ;
+		FONT "MS Sans Serif", 8
+	@ 21.308,38.800 SAY Provedor.cuit ;
+		SIZE 1.000,17.200, 0.000 ;
+		FONT "MS Sans Serif", 8
+ENDIF
+IF NOT EMPTY(currwind)
+	ACTIVATE WINDOW (currwind) SAME
+ENDIF

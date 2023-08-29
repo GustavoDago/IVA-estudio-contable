@@ -1,0 +1,10 @@
+if abonados.ef = "R.I."
+	m.impnetgrab = (m.imporfac - m.impnet105 * 1.105 - m.conograb - m.operexen )/ 1.21
+	m.ivageneral = m.impnetgrab * 0.21 + m.impnet105 * 0.105
+	M.ivanoins = 0
+ELSE
+	m.ivageneral = 0
+	m.impnetgrab = m.imporfac - m.impnet105
+	M.ivanoins = 0
+ENDIF
+show gets
